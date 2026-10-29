@@ -17,7 +17,7 @@ export function computeResults(counts: { optionId: string; count: number }[]): {
     return { ...c, floor: Math.floor(exact), rem: exact - Math.floor(exact) };
   });
   let leftover = 100 - raw.reduce((s, r) => s + r.floor, 0);
-  const order = raw.map((r, i) => i).sort((a, b) => raw[b].rem - raw[a].rem || a - b);
+  const order = raw.map((r, i) => i).sort((a, b) => raw[b]!.rem - raw[a]!.rem || a - b);
   const bonus = new Set<number>();
   for (const i of order) {
     if (leftover <= 0) break;
