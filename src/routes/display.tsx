@@ -113,7 +113,7 @@ function DisplayPage() {
               {snap ? snap.totalVotes : "—"}
             </span>
           </div>
-          <div className="mt-[12px] text-[24px] font-bold leading-none">
+          <div className="mt-[12px] text-[23px] font-bold leading-none whitespace-nowrap">
             {offline ? "Reconnecting…" : "Responses so far"}
           </div>
         </div>

@@ -110,7 +110,7 @@
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 32px 16px 28px;
+  padding: 32px 16px 24px;
 }
 
 @utility glow-text {

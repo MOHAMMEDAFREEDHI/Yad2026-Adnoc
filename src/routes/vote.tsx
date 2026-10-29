@@ -111,14 +111,14 @@ function VotePage() {
         {step === "choose" && (
           <>
             <TopBar onBack={() => setStep("welcome")} />
-            <header className="mt-[39px] text-center">
+            <header className="mt-[26px] text-center">
               <p className="text-[16px] font-semibold">Tap your choice</p>
-              <h1 className="mt-[22px] text-[28px] font-bold leading-[1.22] uppercase">
+              <h1 className="mt-[14px] text-[28px] font-bold leading-[1.22] uppercase">
                 Your future in
                 <br />
                 UAE industry
               </h1>
-              <p className="mt-[20px] text-[16px] font-semibold">
+              <p className="mt-[14px] text-[16px] font-semibold">
                 Which one is <span className="text-cyan">YOU?</span>
               </p>
             </header>
@@ -133,7 +133,7 @@ function VotePage() {
             ) : !question ? (
               <p className="mt-10 text-center text-subtle" aria-live="polite">Loading…</p>
             ) : (
-              <div role="radiogroup" aria-label={question.prompt} className="mt-[26px] grid grid-cols-2 gap-x-[10px] gap-y-[13px]">
+              <div role="radiogroup" aria-label={question.prompt} className="mt-[22px] grid grid-cols-2 gap-x-[10px] gap-y-[10px]">
                 {question.options.map((o) => (
                   <OptionCard
                     key={o.id}
