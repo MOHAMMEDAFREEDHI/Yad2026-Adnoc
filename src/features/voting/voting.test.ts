@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 
 import { MockVotingService, MOCK_QUESTION } from "./mock-service";
 import { computeResults } from "./results";
@@ -23,6 +23,7 @@ describe("computeResults", () => {
 });
 
 describe("MockVotingService", () => {
+  beforeEach(() => localStorage.clear());
   const svc = () => new MockVotingService({ latencyMs: 0, seed: false });
 
   it("a retried submission with the same key counts once", async () => {
