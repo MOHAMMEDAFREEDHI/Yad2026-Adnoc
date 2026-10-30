@@ -114,11 +114,11 @@ export function TopBar({ onBack }: { onBack: () => void }) {
 export function ProgressRow({ percent, className = "" }: { percent: number | null; className?: string }) {
   const p = percent ?? 0;
   return (
-    <div className={`flex items-center gap-[18px] ${className}`}>
+    <div className={`flex items-center gap-[9.55px] ${className}`}>
       <div className="progress-track flex-1" role="presentation">
         <div className="progress-fill" style={{ width: `${p}%` }} />
       </div>
-      <span className="font-card text-[10.74px] font-bold min-w-[22px] text-right">
+      <span className="font-card text-[10.7419px] leading-[12px] font-bold w-[23.87px] flex-none text-right">
         {percent === null ? "–" : `${p}%`}
       </span>
     </div>
@@ -148,9 +148,9 @@ export function OptionCard({
       onClick={onSelect}
       className="option-card"
     >
-      <Icon size={20} strokeWidth={1.5} aria-hidden />
-      <span className="mt-[13px] text-[13.13px] font-semibold leading-[1.3]">{option.label}</span>
-      <span className="mt-[3px] text-[11.54px] leading-[1.35] text-subtle">{option.description}</span>
+      <Icon size={20.81} strokeWidth={1.5} aria-hidden className="flex-none" />
+      <span className="mt-[8.6px] font-brand text-[13.129px] font-bold leading-[15px]">{option.label}</span>
+      <span className="mt-[3.18px] font-brand text-[11.5376px] font-normal leading-[14px] text-subtle">{option.description}</span>
       <ProgressRow percent={percent} className="mt-auto pt-2" />
     </button>
   );

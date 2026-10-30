@@ -224,10 +224,10 @@
   display: flex;
   flex-direction: column;
   text-align: left;
-  padding: 14px 13px 12px;
-  min-height: 136px;
+  padding: 15.6859px 12.2001px 17.4288px;
+  min-height: 137.66px;
   border-radius: 10px;
-  background: var(--card);
+  background: transparent;
   border: 1.74288px solid var(--border);
   box-shadow: inset 0px 2.29911px 74.7786px 7.47212px rgba(255, 255, 255, 0.16);
   backdrop-filter: blur(11.15px);
@@ -245,14 +245,14 @@
 
 @utility progress-track {
   height: 4px;
-  border-radius: 2.5px;
-  background: rgba(255, 255, 255, 0.25);
+  border-radius: 31.828px;
+  background: rgba(161, 182, 232, 0.380392);
   overflow: hidden;
 }
 
 @utility progress-fill {
   height: 100%;
-  border-radius: 2.5px;
+  border-radius: 31.828px;
   background: #ffffff;
   transition: width 600ms ease;
 }
@@ -268,109 +268,151 @@
   box-shadow: 0 0 24px 8px rgba(63, 224, 255, 0.28);
 }
 
-/* ---------- LED display ---------- */
+/* ---------- LED display (Portrait 2160x3840 9:16 stage) ---------- */
 @utility led-viewport {
   position: fixed;
   inset: 0;
+  width: 100vw;
+  height: 100vh;
   overflow: hidden;
   background: var(--bg-led);
   user-select: none;
   -webkit-user-select: none;
-  font-family: var(--font-led);
+  font-family: var(--font-brand);
+}
+
+@utility led-bg-poster {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  filter: blur(6.92308px);
+  transform: scale(1.03);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 0;
+}
+
+@utility led-bg-video {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 0;
+}
+
+@utility led-bg-tint {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 65% 40% at 50% 45%, rgba(20, 88, 235, 0.22) 0%, rgba(11, 47, 158, 0.42) 100%),
+    linear-gradient(180deg, rgba(13, 60, 198, 0.28) 0%, rgba(16, 73, 228, 0.18) 50%, rgba(11, 47, 158, 0.35) 100%);
+  pointer-events: none;
+  z-index: 0;
 }
 
 @utility led-stage {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 1920px;
-  height: 1080px;
+  width: 2160px;
+  height: 3840px;
   transform-origin: center;
   z-index: 1;
 }
 
-@utility led-overlay-top {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 102px;
-  background: linear-gradient(180deg, #002e8d 0%, rgba(17, 59, 144, 0.67) 50%, rgba(33, 71, 147, 0) 100%);
-  opacity: 0.83;
-  backdrop-filter: blur(11.15px);
-  pointer-events: none;
+@utility led-portrait-title {
+  font-family: var(--font-brand);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 167.419px;
+  line-height: 203px;
+  letter-spacing: -0.01em;
+  text-transform: uppercase;
+  color: #ffffff;
 }
 
-@utility led-overlay-bottom {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 136px;
-  background: linear-gradient(180deg, rgba(33, 71, 147, 0) 0.37%, rgba(17, 59, 144, 0.67) 50%, #002e8d 99.63%);
-  opacity: 0.83;
-  backdrop-filter: blur(11.15px);
-  pointer-events: none;
+@utility led-portrait-prompt {
+  font-family: var(--font-brand);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 81.8943px;
+  line-height: 123px;
+  color: #24d6f3;
+  text-shadow: 0px 4.02446px 42.3574px rgba(255, 255, 255, 0.25);
 }
 
-@utility led-glass {
-  border-radius: 20px;
-  background: linear-gradient(135deg, rgba(32, 69, 143, 0.2548) 0%, rgba(5, 102, 217, 0.49) 100%);
-  border: 1.05288px solid rgba(255, 255, 255, 0.46);
-  box-shadow:
-    inset 0px 3.50067px 43.4083px 20.1288px rgba(255, 245, 245, 0.23),
-    inset -7.8765px 2.6255px 13.5822px 9.47594px rgba(255, 255, 255, 0.54);
-  backdrop-filter: blur(11.15px);
-}
-
-@utility led-cyan-glow {
-  color: var(--cyan);
-  text-shadow: 0px 0px 15.3562px #00edff;
-}
-
-@utility led-card {
+@utility led-portrait-card {
   position: relative;
-  width: 258px;
-  height: 454px;
-  border-radius: 20px;
-  border: 3.01847px solid #00dbf4;
-  box-shadow: 0px 0px 25.657px 3.01847px rgba(0, 219, 255, 0.701961);
-  overflow: hidden;
-  background: linear-gradient(90deg, #03417f 0%, #00205c 50%, #002b7f 100%);
-  -webkit-box-reflect: below 20px linear-gradient(transparent 72%, rgba(255, 255, 255, 0.22));
-}
-
-@utility led-card-top {
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 190px;
-  background: linear-gradient(178.46deg, #214692 4%, rgba(33, 70, 145, 0.41) 47.53%, rgba(5, 102, 217, 0) 91.07%);
-}
-
-@utility led-card-label {
-  position: absolute;
-  inset: auto 0 0 0;
-  height: 92px;
+  box-sizing: border-box;
+  width: 827.48px;
+  height: 590.93px;
+  padding: 67.2738px 82.715px 74.7487px;
+  border-radius: 42.8881px;
+  background: rgba(5, 102, 217, 0.28);
+  border: 7.47487px solid rgba(36, 214, 243, 0.94);
+  box-shadow: inset 0px 9.86047px 320.712px 32.0465px rgba(255, 255, 255, 0.16);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   display: flex;
-  align-items: center;
-  gap: 16px;
-  padding: 0 14px;
-  background: linear-gradient(0deg, #004895, #004895);
-  &::before {
-    content: "";
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 80px;
-    height: 2.5px;
-    background: #12b8e3;
-  }
+  flex-direction: column;
+  align-items: flex-start;
+  overflow: hidden;
 }
 
-@utility led-icon-ring {
-  width: 55px;
-  height: 55px;
+@utility led-portrait-card-title {
+  font-family: var(--font-brand);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 56.308px;
+  line-height: 65px;
+  color: #ffffff;
+}
+
+@utility led-portrait-card-desc {
+  font-family: var(--font-brand);
+  font-style: normal;
+  font-weight: 400;
+  font-size: 49.4828px;
+  line-height: 61px;
+  color: #d2ddf7;
+}
+
+@utility led-portrait-track {
+  position: relative;
+  width: 518.95px;
+  height: 17.16px;
+  border-radius: 136.504px;
+  background: rgba(161, 182, 232, 0.380392);
+  overflow: hidden;
   flex: none;
-  border-radius: 9999px;
-  display: grid;
-  place-items: center;
-  border: 1.5px solid #00dbf4;
-  background: #003775;
+}
+
+@utility led-portrait-fill {
+  height: 100%;
+  border-radius: 136.504px;
+  background: rgba(36, 214, 243, 0.94);
+  transition: width 600ms ease;
+}
+
+@utility led-portrait-pct {
+  width: 102.38px;
+  height: 52px;
+  font-family: var(--font-card);
+  font-style: normal;
+  font-weight: 700;
+  font-size: 46.0701px;
+  line-height: 51px;
+  text-align: right;
+  color: rgba(36, 214, 243, 0.94);
+  font-variant-numeric: tabular-nums;
+  flex: none;
 }

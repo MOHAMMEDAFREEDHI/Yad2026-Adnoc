@@ -1,20 +1,23 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Users } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Building2, Cpu, Factory, HardHat, Lightbulb, Rocket } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
 
-import adnocLogoUrl from "@/assets/display/Adnoc Logo 1 1.png";
-import { BackgroundVideo } from "@/features/voting/components/MobileUI";
+import displayLogoUrl from "@/assets/display/Asset 2 1.png";
+import displayHeaderAssetUrl from "@/assets/display/Frame 1000011482.png";
+import displayVideoUrl from "@/assets/display/Zone 5 BG Loop 4K.mp4";
+import displayPosterUrl from "@/assets/voting/Asset 2@3x 2.png";
+import { MOCK_QUESTION } from "@/features/voting/mock-service";
 import { OPTION_VISUALS } from "@/features/voting/presentation";
 import { getVotingService } from "@/features/voting/service";
-import type { Question, ResultsSnapshot } from "@/features/voting/types";
+import type { AnswerOption, OptionKey, Question, ResultsSnapshot } from "@/features/voting/types";
 
 export const Route = createFileRoute("/display")({
   head: () => ({
     meta: [
       { title: "Live results — Your future in UAE industry" },
-      { name: "description", content: "Live ADIPEC 2026 voting results for the LED screen." },
+      { name: "description", content: "Live ADIPEC 2026 voting results for the portrait LED screen." },
       { property: "og:title", content: "Live results — Your future in UAE industry" },
-      { property: "og:description", content: "Live ADIPEC 2026 voting results for the LED screen." },
+      { property: "og:description", content: "Live ADIPEC 2026 voting results for the portrait LED screen." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -23,10 +26,17 @@ export const Route = createFileRoute("/display")({
   component: DisplayPage,
 });
 
-function useStageScale() {
+const STAGE_WIDTH = 2160;
+const STAGE_HEIGHT = 3840;
+
+function usePortraitStageScale() {
   const [scale, setScale] = useState(1);
   useEffect(() => {
-    const fit = () => setScale(Math.min(window.innerWidth / 1920, window.innerHeight / 1080));
+    const fit = () => {
+      const w = window.innerWidth || STAGE_WIDTH;
+      const h = window.innerHeight || STAGE_HEIGHT;
+      setScale(Math.min(w / STAGE_WIDTH, h / STAGE_HEIGHT));
+    };
     fit();
     window.addEventListener("resize", fit);
     return () => window.removeEventListener("resize", fit);
@@ -54,151 +64,238 @@ function useKioskHygiene() {
   return idle;
 }
 
+function DisplayBackgroundVideo() {
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el) return;
+    el.muted = true;
+    el.defaultMuted = true;
+    const prefersReducedMotion =
+      typeof window !== "undefined" &&
+      typeof window.matchMedia === "function" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (prefersReducedMotion) {
+      el.pause();
+      return;
+    }
+    const playPromise = el.play();
+    if (playPromise && typeof playPromise.catch === "function") {
+      playPromise.catch(() => {
+        // Autoplay blocked or unavailable; static fallback image remains visible beneath.
+      });
+    }
+  }, []);
+
+  return (
+    <>
+      <img
+        src={displayPosterUrl}
+        alt=""
+        aria-hidden="true"
+        draggable={false}
+        className="led-bg-poster"
+      />
+      <video
+        ref={videoRef}
+        src={displayVideoUrl}
+        poster={displayPosterUrl}
+        autoPlay
+        muted
+        loop
+        playsInline
+        preload="auto"
+        aria-hidden="true"
+        tabIndex={-1}
+        className="led-bg-video"
+      />
+      <div className="led-bg-tint" aria-hidden="true" />
+    </>
+  );
+}
+
+function renderDisplayIcon(key: OptionKey) {
+  const commonProps = { size: 90, strokeWidth: 1.75, className: "text-white", "aria-hidden": true as const };
+  if (key === "business-owner") return <Rocket {...commonProps} />;
+  if (key === "industrial-investor") return <Factory {...commonProps} />;
+  if (key === "private-sector") return <Building2 {...commonProps} />;
+  if (key === "industrial-specialist") return <HardHat {...commonProps} />;
+  if (key === "data-ai") return <Cpu {...commonProps} />;
+  if (key === "something-else") return <Lightbulb {...commonProps} />;
+  const FallbackIcon = OPTION_VISUALS[key as OptionKey]?.icon ?? Lightbulb;
+  return <FallbackIcon {...commonProps} />;
+}
+
+function DisplayResultCard({
+  option,
+  percent,
+  voteCount,
+}: {
+  option: AnswerOption;
+  percent: number;
+  voteCount: number;
+}) {
+  const clampedPct = Math.min(100, Math.max(0, Math.round(percent)));
+
+  return (
+    <article
+      className="led-portrait-card"
+      data-option-id={option.id}
+      data-option-key={option.key}
+      data-vote-count={voteCount}
+    >
+      <div className="relative w-[662.05px] h-[470.94px]">
+        <div className="flex items-center justify-start w-[106px] h-[102px]">
+          {renderDisplayIcon(option.key)}
+        </div>
+
+        <div className="mt-[24px] flex flex-col items-start gap-[13.65px] w-[662.05px]">
+          <h2 className="led-portrait-card-title">{option.label}</h2>
+          {option.description && <p className="led-portrait-card-desc">{option.description}</p>}
+        </div>
+
+        <div className="absolute left-0 bottom-0 w-[662.05px] h-[51.19px] flex items-center gap-[40.95px]">
+          <div
+            className="led-portrait-track"
+            role="progressbar"
+            aria-valuenow={clampedPct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`${option.label} vote share`}
+          >
+            <div className="led-portrait-fill" style={{ width: `${clampedPct}%` }} />
+          </div>
+          <span className="led-portrait-pct">{clampedPct}%</span>
+        </div>
+      </div>
+    </article>
+  );
+}
+
 function DisplayPage() {
   const service = getVotingService();
-  const scale = useStageScale();
+  const scale = usePortraitStageScale();
   const idle = useKioskHygiene();
   const [question, setQuestion] = useState<Question | null>(null);
   const [snap, setSnap] = useState<ResultsSnapshot | null>(null);
-  const [offline, setOffline] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
     let unsub = () => {};
-    let retry: ReturnType<typeof setTimeout>;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const clearRetry = () => {
+      if (retryTimer !== null) {
+        clearTimeout(retryTimer);
+        retryTimer = null;
+      }
+    };
+
     const load = async () => {
+      clearRetry();
       try {
         const q = await service.getActiveQuestion();
         if (cancelled) return;
         setQuestion(q);
-        setSnap(await service.getResults(q.id));
-        setOffline(false);
+        const initialResults = await service.getResults(q.id);
+        if (cancelled) return;
+        setSnap(initialResults);
         unsub();
-        unsub = service.subscribeResults(q.id, setSnap);
+        unsub = service.subscribeResults(q.id, (nextSnap) => {
+          if (!cancelled) setSnap(nextSnap);
+        });
       } catch {
         if (cancelled) return;
-        setOffline(true);
-        retry = setTimeout(load, 5000);
+        retryTimer = setTimeout(load, 5000);
       }
     };
-    load();
-    // Fresh authoritative snapshot on reconnect / when the tab becomes visible again.
-    const refresh = () => load();
-    const onVis = () => document.visibilityState === "visible" && load();
+
+    void load();
+
+    const refresh = () => {
+      void load();
+    };
+    const onVis = () => {
+      if (document.visibilityState === "visible") {
+        void load();
+      }
+    };
     window.addEventListener("online", refresh);
     document.addEventListener("visibilitychange", onVis);
+
     return () => {
       cancelled = true;
-      clearTimeout(retry);
+      clearRetry();
       unsub();
       window.removeEventListener("online", refresh);
       document.removeEventListener("visibilitychange", onVis);
     };
   }, [service]);
 
-  const maxPct = Math.max(1, ...(snap?.results.map((r) => r.percent) ?? [1]));
+  const activeQuestion = question ?? MOCK_QUESTION;
+  const sortedOptions = [...activeQuestion.options].sort((a, b) => a.sortOrder - b.sortOrder);
 
   return (
-    <div
+    <main
       className="led-viewport"
       style={{ cursor: idle ? "none" : "default" }}
       onContextMenu={(e) => e.preventDefault()}
       onDragStart={(e) => e.preventDefault()}
       onClickCapture={(e) => e.preventDefault()}
+      data-total-votes={snap?.totalVotes ?? 0}
     >
-      <BackgroundVideo />
-      <div className="led-stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
-        <div className="led-overlay-top" aria-hidden="true" />
-        <div className="led-overlay-bottom" aria-hidden="true" />
+      <DisplayBackgroundVideo />
 
-        <div className="led-glass absolute left-[88px] top-[87px] w-[273px] h-[122px] px-[36px] pt-[18px]">
-          <div className="flex items-center gap-[16px]">
-            <Users size={42} strokeWidth={1.6} className="text-cyan" />
-            <span className="text-[47.56px] font-bold leading-none tabular-nums">
-              {snap ? snap.totalVotes : "—"}
-            </span>
-          </div>
-          <div className="mt-[12px] text-[23px] font-bold leading-none whitespace-nowrap">
-            {offline ? "Reconnecting…" : "Responses so far"}
-          </div>
-        </div>
-
+      <div
+        className="led-stage"
+        style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
+      >
+        {/* Upper-right vertical ADNOC badge (Asset 2 1.png) */}
         <img
-          src={adnocLogoUrl}
+          src={displayLogoUrl}
           alt="ADNOC"
           draggable={false}
-          className="absolute right-[88px] top-[87px] w-[244px] h-[121px] object-contain"
+          className="absolute left-[1719.71px] top-[219px] w-[260.57px] h-[393.35px] object-contain select-none pointer-events-none"
         />
 
-        <h1 className="absolute inset-x-0 top-[150px] text-center font-bold">
-          <span className="block text-[60px] leading-[1.1]">Your future in UAE industry</span>
-          <span className="block led-cyan-glow text-[60px] leading-[1.1] mt-[16px]">
-            {question?.prompt ?? "Which one is YOU?"}
-          </span>
-        </h1>
+        {/* Main portrait content container (Frame 1000011487) */}
+        <div className="absolute left-[229px] top-[701.21px] w-[1702.28px] h-[2524.67px] flex flex-col items-start gap-[97.3px]">
+          {/* Header block (Frame 1000011482) */}
+          <header
+            className=" flex flex-col items-start gap-[29.95px] w-[1461.34px] h-[559.95px]"
+            data-header-asset={displayHeaderAssetUrl}
+          >
+            <h1 className="led-portrait-title w-[1461.34px] h-[407px] flex flex-col justify-center">
+              <span>YOUR FUTURE IN</span>
+              <span>UAE INDUSTRY</span>
+            </h1>
+            <p className="led-portrait-prompt w-[1461.34px] h-[123px] whitespace-nowrap">
+              {activeQuestion.prompt || "Which one is YOU?"} Tap your choice
+            </p>
+          </header>
 
-        <div className="absolute left-[90px] right-[90px] top-[374px] flex justify-between">
-          {(question?.options ?? []).map((o) => {
-            const v = OPTION_VISUALS[o.key];
-            const Icon = v.icon;
-            const pct = snap?.results.find((r) => r.optionId === o.id)?.percent;
-            const fill = pct === undefined ? 0 : pct / maxPct;
-            return (
-              <div key={o.id} className="led-card" data-expected-asset={v.expectedAssetFile}>
-                {v.image && (
-                  <img
-                    src={v.image}
-                    alt=""
-                    draggable={false}
-                    className="absolute max-w-none select-none"
-                    style={{ width: 378, height: 631, left: -60, top: -127 }}
-                  />
-                )}
-                <div className="led-card-top" />
-                <div className="relative pt-[14px] text-center">
-                  <div className="text-[47.56px] font-bold leading-[1.15] tabular-nums transition-all">
-                    {pct === undefined ? "—" : `${pct}%`}
-                  </div>
-                  <Segments fill={fill} />
-                </div>
-                <div className="led-card-label">
-                  <span className="led-icon-ring">
-                    <Icon size={26} strokeWidth={1.5} />
-                  </span>
-                  <span className="text-[19px] font-bold leading-[1.13]">
-                    {v.ledLabel[0]}
-                    {v.ledLabel[1] && (
-                      <>
-                        <br />
-                        {v.ledLabel[1]}
-                      </>
-                    )}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+          {/* Six result cards in a 2-column x 3-row grid (Frame 1000011481) */}
+          <section
+            aria-label="Live voting results"
+            className="grid grid-cols-2 gap-x-[47.31px] gap-y-[47.31px] w-[1702.28px] h-[1867.42px]"
+          >
+            {sortedOptions.map((option) => {
+              const entry = snap?.results.find((r) => r.optionId === option.id);
+              const pct = question && snap ? (entry?.percent ?? 0) : 0;
+              const count = question && snap ? (entry?.count ?? 0) : 0;
+              return (
+                <DisplayResultCard
+                  key={option.id}
+                  option={option}
+                  percent={pct}
+                  voteCount={count}
+                />
+              );
+            })}
+          </section>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** Three-segment cyan indicator from the LED reference; fill is relative to the leading option. */
-function Segments({ fill }: { fill: number }) {
-  return (
-    <div className="mx-auto mt-[6px] flex w-[120px] gap-[5px]" aria-hidden>
-      {[0, 1, 2].map((i) => {
-        const part = Math.min(1, Math.max(0, fill * 3 - i));
-        return (
-          <div key={i} className="relative h-[5px] flex-1 overflow-hidden rounded-[2px] bg-[#12B8E3]/40">
-            <div
-              className="absolute inset-y-0 left-0 rounded-[2px] bg-cyan transition-[width] duration-700"
-              style={{ width: `${part * 100}%` }}
-            />
-          </div>
-        );
-      })}
-    </div>
+    </main>
   );
 }

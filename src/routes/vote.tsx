@@ -37,11 +37,13 @@ export const Route = createFileRoute("/vote")({
 
 type Step = "welcome" | "choose" | "thanks";
 const SUBMIT_TIMEOUT_MS = 12000;
+export const QUESTION_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 30_000] as const;
 
 function VotePage() {
   const service = getVotingService();
   const [step, setStep] = useState<Step>("welcome");
   const [question, setQuestion] = useState<Question | null>(null);
+  const [loadingQuestion, setLoadingQuestion] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [results, setResults] = useState<ResultsSnapshot | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -51,17 +53,113 @@ function VotePage() {
   const keyRef = useRef<{ optionId: string; key: string } | null>(null);
   const inFlight = useRef(false);
 
-  const loadQuestion = useCallback(() => {
-    setLoadError(null);
-    const ctrl = new AbortController();
-    service
-      .getActiveQuestion(ctrl.signal)
-      .then(setQuestion)
-      .catch(() => setLoadError(VOTE_ERROR_MESSAGES.QUESTION_UNAVAILABLE));
-    return () => ctrl.abort();
-  }, [service]);
+  const mountedRef = useRef(false);
+  const questionRef = useRef<Question | null>(null);
+  const questionInFlightRef = useRef<AbortController | null>(null);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const retryAttemptRef = useRef(0);
 
-  useEffect(() => loadQuestion(), [loadQuestion]);
+  const clearRetryTimer = useCallback(() => {
+    if (retryTimerRef.current !== null) {
+      clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = null;
+    }
+  }, []);
+
+  const loadQuestion = useCallback(
+    (opts?: { manual?: boolean; resetBackoff?: boolean }) => {
+      if (questionRef.current) {
+        clearRetryTimer();
+        return;
+      }
+
+      if (questionInFlightRef.current) {
+        if (!opts?.manual) return;
+        questionInFlightRef.current.abort();
+        questionInFlightRef.current = null;
+      }
+
+      clearRetryTimer();
+      if (opts?.manual || opts?.resetBackoff) {
+        retryAttemptRef.current = 0;
+      }
+      if (opts?.manual) {
+        setLoadError(null);
+      }
+
+      setLoadingQuestion(true);
+      const ctrl = new AbortController();
+      questionInFlightRef.current = ctrl;
+
+      service
+        .getActiveQuestion(ctrl.signal)
+        .then((q) => {
+          if (!mountedRef.current || questionInFlightRef.current !== ctrl) return;
+          questionInFlightRef.current = null;
+          clearRetryTimer();
+          retryAttemptRef.current = 0;
+          questionRef.current = q;
+          setQuestion(q);
+          setLoadError(null);
+          setLoadingQuestion(false);
+        })
+        .catch((err: unknown) => {
+          if (!mountedRef.current || ctrl.signal.aborted || questionInFlightRef.current !== ctrl) return;
+          questionInFlightRef.current = null;
+          setLoadingQuestion(false);
+
+          const code =
+            err instanceof VoteError
+              ? err.code
+              : typeof navigator !== "undefined" && !navigator.onLine
+                ? "NETWORK"
+                : "SERVER";
+          setLoadError(VOTE_ERROR_MESSAGES[code]);
+
+          const attemptIndex = Math.min(retryAttemptRef.current, QUESTION_RETRY_DELAYS_MS.length - 1);
+          const delayMs = QUESTION_RETRY_DELAYS_MS[attemptIndex]!;
+          retryAttemptRef.current += 1;
+
+          retryTimerRef.current = setTimeout(() => {
+            retryTimerRef.current = null;
+            if (mountedRef.current && !questionRef.current) {
+              loadQuestion();
+            }
+          }, delayMs);
+        });
+    },
+    [service, clearRetryTimer],
+  );
+
+  useEffect(() => {
+    mountedRef.current = true;
+    loadQuestion({ resetBackoff: true });
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === "visible" && !questionRef.current) {
+        loadQuestion({ resetBackoff: true });
+      }
+    };
+    const onOnline = () => {
+      if (!questionRef.current) {
+        loadQuestion({ resetBackoff: true });
+      }
+    };
+
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    window.addEventListener("online", onOnline);
+
+    return () => {
+      mountedRef.current = false;
+      clearRetryTimer();
+      if (questionInFlightRef.current) {
+        questionInFlightRef.current.abort();
+        questionInFlightRef.current = null;
+      }
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("online", onOnline);
+    };
+  }, [loadQuestion, clearRetryTimer]);
 
   useEffect(() => {
     if (!question) return;
@@ -137,7 +235,16 @@ function VotePage() {
         />
       )}
       <div className="mobile-frame">
-        {step === "welcome" && <Welcome onStart={() => setStep("choose")} />}
+        {step === "welcome" && (
+          <Welcome
+            onStart={() => {
+              setStep("choose");
+              if (!questionRef.current && !questionInFlightRef.current && retryTimerRef.current === null) {
+                loadQuestion({ resetBackoff: true });
+              }
+            }}
+          />
+        )}
 
         {step === "choose" && (
           <>
@@ -154,17 +261,8 @@ function VotePage() {
               </p>
             </header>
 
-            {loadError ? (
-              <div className="mt-10 text-center text-subtle" role="alert">
-                <p>{loadError}</p>
-                <button type="button" className="mt-3 underline" onClick={loadQuestion}>
-                  Try again
-                </button>
-              </div>
-            ) : !question ? (
-              <p className="mt-10 text-center text-subtle" aria-live="polite">Loading…</p>
-            ) : (
-              <div role="radiogroup" aria-label={question.prompt} className="mt-[22px] grid grid-cols-2 gap-x-[10px] gap-y-[10px]">
+            {question ? (
+              <div role="radiogroup" aria-label={question.prompt} className="mt-[22px] grid grid-cols-2 gap-x-[10.34px] gap-y-[11.14px]">
                 {question.options.map((o) => (
                   <OptionCard
                     key={o.id}
@@ -179,6 +277,21 @@ function VotePage() {
                   />
                 ))}
               </div>
+            ) : loadError ? (
+              <div className="mt-10 text-center text-subtle" role="alert">
+                <p>{loadError}</p>
+                {loadingQuestion ? (
+                  <p className="mt-3 text-[13px] opacity-80" aria-live="polite">
+                    Checking again…
+                  </p>
+                ) : (
+                  <button type="button" className="mt-3 underline" onClick={() => loadQuestion({ manual: true })}>
+                    Try again
+                  </button>
+                )}
+              </div>
+            ) : (
+              <p className="mt-10 text-center text-subtle" aria-live="polite">Loading…</p>
             )}
 
             <div className="mt-auto pt-6">

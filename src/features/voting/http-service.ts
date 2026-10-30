@@ -16,13 +16,27 @@ import {
  * Activated only when VITE_VOTE_API_URL is set (see service.ts).
  */
 const STATUS_TO_CODE: Record<number, VoteErrorCode> = {
-  404: "QUESTION_UNAVAILABLE",
   409: "DUPLICATE_VOTE",
   410: "POLL_CLOSED",
   422: "INVALID_OPTION",
 };
 
+const API_ERROR_CODE_MAP: Record<string, VoteErrorCode> = {
+  QUESTION_UNAVAILABLE: "QUESTION_UNAVAILABLE",
+  DUPLICATE_VOTE: "DUPLICATE_VOTE",
+  IDEMPOTENCY_CONFLICT: "DUPLICATE_VOTE",
+  POLL_CLOSED: "POLL_CLOSED",
+  INVALID_OPTION: "INVALID_OPTION",
+};
+
 const POLL_INTERVAL_MS = 5000;
+
+interface ApiErrorBody {
+  error?: {
+    code?: string;
+    message?: string;
+  };
+}
 
 interface ApiActiveQuestion {
   event: { id: string };
@@ -48,6 +62,7 @@ export class HttpVotingService implements VotingService {
     let res: Response;
     try {
       res = await this.fetchImpl(`${this.base}${path}`, {
+        cache: "no-store",
         ...init,
         signal: signal ?? null,
         headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) },
@@ -56,7 +71,17 @@ export class HttpVotingService implements VotingService {
       if (signal?.aborted) throw new VoteError("TIMEOUT");
       throw new VoteError("NETWORK", e instanceof Error ? e.message : undefined);
     }
-    if (!res.ok) throw new VoteError(STATUS_TO_CODE[res.status] ?? "SERVER", `HTTP ${res.status}`);
+    if (!res.ok) {
+      let body: ApiErrorBody | null = null;
+      try {
+        body = (await res.json()) as ApiErrorBody;
+      } catch {
+        // Non-JSON error payload (e.g. HTML 404/502 page from proxy or wrong port)
+      }
+      const apiCode = body?.error?.code ? API_ERROR_CODE_MAP[body.error.code] : undefined;
+      const mappedCode = apiCode ?? STATUS_TO_CODE[res.status] ?? "SERVER";
+      throw new VoteError(mappedCode, body?.error?.message ?? `HTTP ${res.status}`);
+    }
     try {
       return (await res.json()) as T;
     } catch {

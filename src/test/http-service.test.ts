@@ -7,17 +7,33 @@ const json = (status: number, body: unknown = {}) =>
 const sub = { questionId: "q", optionId: "o", idempotencyKey: "k" };
 
 describe("HttpVotingService", () => {
-  it("posts votes with the idempotency key to /api/votes", async () => {
-    const f = vi.fn(() => json(201, { voteId: "v", questionId: "q", optionId: "o", acceptedAt: "t" }));
+  it("posts votes with the idempotency key and cache: no-store to /api/votes", async () => {
+    const f = vi.fn(() => json(201, { voteId: "v", questionId: "q", answerOptionId: "o", acceptedAt: "t" }));
     const s = new HttpVotingService("https://api.test/", f as unknown as typeof fetch);
     await s.submitVote(sub);
     const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://api.test/api/votes");
+    expect(init.cache).toBe("no-store");
     expect(JSON.parse(init.body as string)).toEqual({ questionId: "q", answerOptionId: "o", idempotencyKey: "k" });
   });
 
+  it("maps HTTP 404 with QUESTION_UNAVAILABLE error code to QUESTION_UNAVAILABLE", async () => {
+    const s = new HttpVotingService(
+      "https://api.test",
+      (() => json(404, { error: { code: "QUESTION_UNAVAILABLE", message: "No active voting question is available." } })) as unknown as typeof fetch,
+    );
+    await expect(s.getActiveQuestion()).rejects.toMatchObject({ code: "QUESTION_UNAVAILABLE" });
+  });
+
+  it("maps unexpected HTTP 404 without QUESTION_UNAVAILABLE code to SERVER", async () => {
+    const s = new HttpVotingService(
+      "https://api.test",
+      (() => Promise.resolve(new Response("Not Found", { status: 404, headers: { "Content-Type": "text/html" } }))) as unknown as typeof fetch,
+    );
+    await expect(s.getActiveQuestion()).rejects.toMatchObject({ code: "SERVER" });
+  });
+
   it.each([
-    [404, "QUESTION_UNAVAILABLE"],
     [409, "DUPLICATE_VOTE"],
     [410, "POLL_CLOSED"],
     [422, "INVALID_OPTION"],
