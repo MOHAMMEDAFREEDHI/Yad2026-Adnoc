@@ -85,7 +85,10 @@
   }
   html,
   body {
-    background-color: var(--color-background);
+    min-height: 100vh;
+    min-height: 100dvh;
+    background-color: #1d42ad;
+    background-image: var(--bg-tech);
     color: var(--color-foreground);
     font-family: var(--font-brand);
     -webkit-font-smoothing: antialiased;
@@ -94,10 +97,12 @@
 
 /* ---------- Shared Background Video ---------- */
 @utility bg-video-layer {
-  position: absolute;
+  position: fixed;
   inset: 0;
   width: 100%;
   height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
   object-fit: cover;
   object-position: center;
   pointer-events: none;
@@ -114,6 +119,8 @@
 @utility mobile-stage {
   position: relative;
   overflow: hidden;
+  width: 100%;
+  min-height: 100vh;
   min-height: 100dvh;
   background: var(--bg-tech);
   display: flex;
@@ -134,7 +141,7 @@
 }
 
 @utility mobile-overlay-bottom {
-  position: absolute;
+  position: fixed;
   inset: auto 0 0 0;
   width: 100%;
   height: 240px;
@@ -151,14 +158,22 @@
   z-index: 2;
   width: 100%;
   max-width: 402px;
+  min-height: 100vh;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 25px 16px 14px;
+  padding: 25px 16px calc(24px + env(safe-area-inset-bottom, 0px));
 }
 
 @utility glow-text {
   text-shadow: 0px 0px 12.9px rgba(255, 255, 255, 0.57);
+}
+
+@utility welcome-your {
+  text-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 @utility pill-button {

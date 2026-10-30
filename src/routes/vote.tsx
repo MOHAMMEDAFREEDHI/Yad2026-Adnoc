@@ -6,13 +6,10 @@ import thankYouBottomOverlayUrl from "@/assets/thank-you/Rectangle 3.png";
 import thankYouTopOverlayUrl from "@/assets/thank-you/Rectangle 4.png";
 import votingBottomOverlayUrl from "@/assets/voting/Rectangle 3.png";
 import votingTopOverlayUrl from "@/assets/voting/Rectangle 4.png";
-import welcomeSubtitleUrl from "@/assets/welcome/div5.png";
-import welcomeDreamJobUrl from "@/assets/welcome/dream job_.png";
-import welcomeYourUrl from "@/assets/welcome/YOUR.png";
+import adnocVerticalCardUrl from "@/assets/welcome/adnoc_vertical_card.png";
 import {
   AdnocLogo,
   BackgroundVideo,
-  GrabberBar,
   OptionCard,
   PillButton,
   SelectedSummary,
@@ -303,7 +300,6 @@ function VotePage() {
               <PillButton disabled={!selectedId || submitting || !question} onClick={submit} aria-busy={submitting}>
                 {submitting ? "Submitting…" : "Proceed"}
               </PillButton>
-              <GrabberBar />
             </div>
           </>
         )}
@@ -340,7 +336,6 @@ function VotePage() {
             </div>
             <div className="mt-auto pt-6">
               <PillButton onClick={goHome}>Back to home</PillButton>
-              <GrabberBar />
             </div>
           </>
         )}
@@ -352,35 +347,32 @@ function VotePage() {
 function Welcome({ onStart }: { onStart: () => void }) {
   return (
     <>
-      <section className="mt-[162px] flex flex-col items-center text-center">
-        <AdnocLogo className="h-[52px] w-[103px] object-contain" />
-        <h1 className="mt-[34px] flex flex-col items-center font-bold leading-none">
-          <span className="block text-[36.84px] leading-[47px]">What's</span>
-          <img
-            src={welcomeYourUrl}
-            alt="YOUR"
-            draggable={false}
-            className="mt-[4px] w-[267px] max-w-full h-auto select-none"
-          />
-          <img
-            src={welcomeDreamJobUrl}
-            alt="dream job?"
-            draggable={false}
-            className="mt-[10px] w-[191px] max-w-full h-auto select-none"
-          />
+      <section className="mt-[96px] flex flex-col items-center text-center">
+        <img
+          src={adnocVerticalCardUrl}
+          alt="ADNOC"
+          draggable={false}
+          className="h-[112px] w-[74px] object-contain select-none drop-shadow-[0_0_1px_rgba(255,255,255,0.4)]"
+        />
+        <h1 className="mt-[34px] flex flex-col items-center select-none">
+          <span className="font-brand text-[36.84px] font-bold leading-[47px] tracking-[-0.01em] text-white">
+            What's
+          </span>
+          <span className="welcome-your font-brand text-[95.34px] font-extrabold leading-[108px] tracking-[-0.02em] text-white">
+            YOUR
+          </span>
+          <span className="font-brand text-[36.84px] font-bold leading-[47px] tracking-[-0.01em] text-white">
+            dream job?
+          </span>
         </h1>
-        <p className="mt-[24px]">
-          <img
-            src={welcomeSubtitleUrl}
-            alt="A few taps to find where you fit in the UAE's industrial future."
-            draggable={false}
-            className="mx-auto w-[225px] max-w-full h-auto select-none"
-          />
+        <p className="mt-[24px] max-w-[260px] font-brand text-[13.61px] font-normal leading-[17px] text-white text-center">
+          A few taps to find where you fit in the
+          <br />
+          UAE's industrial future.
         </p>
       </section>
-      <div className="mt-auto pt-8">
+      <div className="mt-auto pt-6">
         <PillButton onClick={onStart}>Let's find out</PillButton>
-        <GrabberBar />
       </div>
     </>
   );
