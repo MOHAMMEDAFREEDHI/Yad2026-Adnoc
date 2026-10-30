@@ -41,6 +41,7 @@
   /* 'ADNOC Sans' is the specified brand face; Inter is an interim fallback until the font files are supplied. */
   --font-brand: "ADNOC Sans", "Inter", system-ui, sans-serif;
   --font-card: "Outfit", system-ui, sans-serif;
+  --font-summary: "Poppins", "Outfit", system-ui, sans-serif;
   --font-led: "Arimo", Arial, sans-serif;
 }
 
@@ -69,16 +70,12 @@
   --cyan: #00edff;
   --navy: #214692;
 
-  /* Interim layered "tech corridor" background. Replace with Asset 2@3x.png / LED background when supplied. */
+  /* Base CSS fallback beneath BackgroundVideo (which renders Asset 2@3x 2.png + background-video.mp4). */
   --bg-tech:
     radial-gradient(ellipse 60% 35% at 50% 48%, rgba(120, 170, 255, 0.35), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.04) 0 1px, transparent 1px 46px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.03) 0 1px, transparent 1px 38px),
     linear-gradient(180deg, #0f43d6 0%, #1049e4 45%, #0d3fc9 100%);
   --bg-led:
     radial-gradient(ellipse 45% 30% at 50% 30%, rgba(90, 160, 255, 0.35), transparent 70%),
-    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 80px),
-    repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 64px),
     linear-gradient(180deg, #0a2f9e 0%, #1446cf 40%, #123fbe 70%, #0b2f97 100%);
 }
 
@@ -95,22 +92,69 @@
   }
 }
 
+/* ---------- Shared Background Video ---------- */
+@utility bg-video-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  z-index: 0;
+}
+
+@utility bg-video-blurred {
+  filter: blur(1.5px);
+}
+
 /* ---------- Mobile ---------- */
 @utility mobile-stage {
+  position: relative;
+  overflow: hidden;
   min-height: 100dvh;
   background: var(--bg-tech);
   display: flex;
   justify-content: center;
 }
 
+@utility mobile-overlay-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  width: 100%;
+  height: 194px;
+  object-fit: fill;
+  opacity: 0.79;
+  backdrop-filter: blur(11.15px);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
+@utility mobile-overlay-bottom {
+  position: absolute;
+  inset: auto 0 0 0;
+  width: 100%;
+  height: 240px;
+  object-fit: fill;
+  opacity: 0.79;
+  backdrop-filter: blur(11.15px);
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+}
+
 @utility mobile-frame {
   position: relative;
+  z-index: 2;
   width: 100%;
-  max-width: 430px;
+  max-width: 402px;
   min-height: 100dvh;
   display: flex;
   flex-direction: column;
-  padding: 32px 16px 24px;
+  padding: 25px 16px 14px;
 }
 
 @utility glow-text {
@@ -123,20 +167,24 @@
   align-items: center;
   justify-content: center;
   width: 100%;
+  max-width: 370px;
+  margin-inline: auto;
   height: 60px;
-  border-radius: 97px;
+  border-radius: 94.7915px;
+  border: 1px solid #ffffff;
   background: var(--primary);
   color: var(--primary-foreground);
-  font-family: var(--font-brand);
+  font-family: "Inter", var(--font-brand);
   font-weight: 700;
   font-size: 18px;
-  transition: background 200ms, color 200ms, transform 120ms;
+  line-height: 24px;
+  backdrop-filter: blur(37.85px);
+  transition: opacity 200ms, transform 120ms;
   &:active:not(:disabled) {
     transform: scale(0.985);
   }
   &:disabled {
-    background: var(--muted);
-    color: color-mix(in srgb, var(--navy) 55%, transparent);
+    opacity: 0.3;
     cursor: not-allowed;
   }
   &:focus-visible {
@@ -145,18 +193,16 @@
   }
 }
 
-@utility pill-arrow {
+@utility pill-arrow-img {
   position: absolute;
   right: 8px;
   top: 50%;
   translate: 0 -50%;
-  width: 44px;
-  height: 44px;
-  border-radius: 9999px;
-  display: grid;
-  place-items: center;
-  background: var(--navy);
-  color: var(--foreground);
+  width: 42px;
+  height: 42px;
+  border-radius: 76px;
+  pointer-events: none;
+  user-select: none;
 }
 
 @utility glass-back {
@@ -188,8 +234,8 @@
   font-family: var(--font-card);
   transition: background 180ms, border-color 180ms;
   &[aria-checked="true"] {
-    background: linear-gradient(160deg, #1f6ff0 0%, #1258e0 100%);
-    border: 1.35269px solid #ffffff;
+    background: #0566d9;
+    border: 1.74288px solid #ffffff;
   }
   &:focus-visible {
     outline: 3px solid var(--ring);
@@ -212,14 +258,14 @@
 }
 
 @utility check-badge {
-  width: 62px;
-  height: 62px;
+  width: 60px;
+  height: 60px;
   border-radius: 9999px;
-  border: 2px solid #ffffff;
+  border: 2.06811px solid #ffffff;
   display: grid;
   place-items: center;
-  box-shadow: 0 0 40px 10px rgba(110, 170, 255, 0.55);
-  background: rgba(16, 73, 228, 0.6);
+  background: radial-gradient(70% 70% at 50% 40%, rgba(0, 237, 255, 0.47) 0%, rgba(0, 237, 255, 0) 100%);
+  box-shadow: 0 0 24px 8px rgba(63, 224, 255, 0.28);
 }
 
 /* ---------- LED display ---------- */
@@ -240,6 +286,27 @@
   width: 1920px;
   height: 1080px;
   transform-origin: center;
+  z-index: 1;
+}
+
+@utility led-overlay-top {
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 102px;
+  background: linear-gradient(180deg, #002e8d 0%, rgba(17, 59, 144, 0.67) 50%, rgba(33, 71, 147, 0) 100%);
+  opacity: 0.83;
+  backdrop-filter: blur(11.15px);
+  pointer-events: none;
+}
+
+@utility led-overlay-bottom {
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 136px;
+  background: linear-gradient(180deg, rgba(33, 71, 147, 0) 0.37%, rgba(17, 59, 144, 0.67) 50%, #002e8d 99.63%);
+  opacity: 0.83;
+  backdrop-filter: blur(11.15px);
+  pointer-events: none;
 }
 
 @utility led-glass {
@@ -265,7 +332,7 @@
   border: 3.01847px solid #00dbf4;
   box-shadow: 0px 0px 25.657px 3.01847px rgba(0, 219, 255, 0.701961);
   overflow: hidden;
-  background: #003775;
+  background: linear-gradient(90deg, #03417f 0%, #00205c 50%, #002b7f 100%);
   -webkit-box-reflect: below 20px linear-gradient(transparent 72%, rgba(255, 255, 255, 0.22));
 }
 
@@ -285,16 +352,25 @@
   gap: 16px;
   padding: 0 14px;
   background: linear-gradient(0deg, #004895, #004895);
-  border-top: 2px solid rgba(0, 237, 255, 0.35);
+  &::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 80px;
+    height: 2.5px;
+    background: #12b8e3;
+  }
 }
 
 @utility led-icon-ring {
-  width: 54px;
-  height: 54px;
+  width: 55px;
+  height: 55px;
   flex: none;
   border-radius: 9999px;
   display: grid;
   place-items: center;
-  border: 1.5px solid rgba(255, 255, 255, 0.55);
+  border: 1.5px solid #00dbf4;
   background: #003775;
 }

@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Users } from "lucide-react";
 import { useEffect, useState } from "react";
 
-import logo from "@/assets/interim/adnoc-logo.png.asset.json";
+import adnocLogoUrl from "@/assets/display/Adnoc Logo 1 1.png";
+import { BackgroundVideo } from "@/features/voting/components/MobileUI";
 import { OPTION_VISUALS } from "@/features/voting/presentation";
 import { getVotingService } from "@/features/voting/service";
 import type { Question, ResultsSnapshot } from "@/features/voting/types";
@@ -105,10 +106,14 @@ function DisplayPage() {
       onDragStart={(e) => e.preventDefault()}
       onClickCapture={(e) => e.preventDefault()}
     >
+      <BackgroundVideo />
       <div className="led-stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
+        <div className="led-overlay-top" aria-hidden="true" />
+        <div className="led-overlay-bottom" aria-hidden="true" />
+
         <div className="led-glass absolute left-[88px] top-[87px] w-[273px] h-[122px] px-[36px] pt-[18px]">
           <div className="flex items-center gap-[16px]">
-            <Users size={42} strokeWidth={1.6} />
+            <Users size={42} strokeWidth={1.6} className="text-cyan" />
             <span className="text-[47.56px] font-bold leading-none tabular-nums">
               {snap ? snap.totalVotes : "—"}
             </span>
@@ -119,10 +124,10 @@ function DisplayPage() {
         </div>
 
         <img
-          src={logo.url}
+          src={adnocLogoUrl}
           alt="ADNOC"
           draggable={false}
-          className="absolute right-[88px] top-[87px] w-[244px] h-[121px]"
+          className="absolute right-[88px] top-[87px] w-[244px] h-[121px] object-contain"
         />
 
         <h1 className="absolute inset-x-0 top-[150px] text-center font-bold">
@@ -139,13 +144,16 @@ function DisplayPage() {
             const pct = snap?.results.find((r) => r.optionId === o.id)?.percent;
             const fill = pct === undefined ? 0 : pct / maxPct;
             return (
-              <div key={o.id} className="led-card">
-                <img
-                  src={v.image}
-                  alt=""
-                  draggable={false}
-                  className="absolute inset-x-0 bottom-[92px] h-[290px] w-full object-cover object-bottom"
-                />
+              <div key={o.id} className="led-card" data-expected-asset={v.expectedAssetFile}>
+                {v.image && (
+                  <img
+                    src={v.image}
+                    alt=""
+                    draggable={false}
+                    className="absolute max-w-none select-none"
+                    style={{ width: 378, height: 631, left: -60, top: -127 }}
+                  />
+                )}
                 <div className="led-card-top" />
                 <div className="relative pt-[14px] text-center">
                   <div className="text-[47.56px] font-bold leading-[1.15] tabular-nums transition-all">

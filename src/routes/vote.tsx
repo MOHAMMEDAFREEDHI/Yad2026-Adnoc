@@ -1,9 +1,18 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Check } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
+import thankYouFrameUrl from "@/assets/thank-you/Frame 1000011480.png";
+import thankYouBottomOverlayUrl from "@/assets/thank-you/Rectangle 3.png";
+import thankYouTopOverlayUrl from "@/assets/thank-you/Rectangle 4.png";
+import votingBottomOverlayUrl from "@/assets/voting/Rectangle 3.png";
+import votingTopOverlayUrl from "@/assets/voting/Rectangle 4.png";
+import welcomeSubtitleUrl from "@/assets/welcome/div5.png";
+import welcomeDreamJobUrl from "@/assets/welcome/dream job_.png";
+import welcomeYourUrl from "@/assets/welcome/YOUR.png";
 import {
   AdnocLogo,
+  BackgroundVideo,
+  GrabberBar,
   OptionCard,
   PillButton,
   SelectedSummary,
@@ -103,8 +112,30 @@ function VotePage() {
     setStep("welcome");
   }
 
+  const topOverlaySrc = step === "choose" ? votingTopOverlayUrl : step === "thanks" ? thankYouTopOverlayUrl : null;
+  const bottomOverlaySrc = step === "choose" ? votingBottomOverlayUrl : step === "thanks" ? thankYouBottomOverlayUrl : null;
+
   return (
     <main className="mobile-stage">
+      <BackgroundVideo blurred={step !== "welcome"} />
+      {topOverlaySrc && (
+        <img
+          src={topOverlaySrc}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="mobile-overlay-top"
+        />
+      )}
+      {bottomOverlaySrc && (
+        <img
+          src={bottomOverlaySrc}
+          alt=""
+          aria-hidden="true"
+          draggable={false}
+          className="mobile-overlay-bottom"
+        />
+      )}
       <div className="mobile-frame">
         {step === "welcome" && <Welcome onStart={() => setStep("choose")} />}
 
@@ -159,6 +190,7 @@ function VotePage() {
               <PillButton disabled={!selectedId || submitting || !question} onClick={submit} aria-busy={submitting}>
                 {submitting ? "Submitting…" : "Proceed"}
               </PillButton>
+              <GrabberBar />
             </div>
           </>
         )}
@@ -166,11 +198,19 @@ function VotePage() {
         {step === "thanks" && accepted && (
           <>
             <TopBar onBack={goHome} />
-            <section className="mt-[90px] flex flex-col items-center text-center">
-              <div className="check-badge" aria-hidden>
-                <Check size={30} strokeWidth={2.5} />
+            <section className="mt-[64px] flex flex-col items-center text-center">
+              <div
+                className="relative h-[108px] w-[120px] overflow-hidden pointer-events-none select-none"
+                aria-hidden="true"
+              >
+                <img
+                  src={thankYouFrameUrl}
+                  alt=""
+                  draggable={false}
+                  className="absolute left-1/2 top-0 h-[499px] w-[345px] max-w-none -translate-x-1/2"
+                />
               </div>
-              <h1 className="mt-[22px] glow-text text-[50px] font-bold leading-[1.15] uppercase">
+              <h1 className="mt-[6px] glow-text text-[50px] font-bold leading-[1.15] uppercase">
                 Thank
                 <br />
                 you!
@@ -182,11 +222,12 @@ function VotePage() {
                 We'll use it to show where you fit in the UAE's industrial future.
               </p>
             </section>
-            <div className="mt-[46px]">
+            <div className="mt-[40px]">
               <SelectedSummary option={accepted} percent={percentFor(accepted.id)} />
             </div>
             <div className="mt-auto pt-6">
               <PillButton onClick={goHome}>Back to home</PillButton>
+              <GrabberBar />
             </div>
           </>
         )}
@@ -199,18 +240,34 @@ function Welcome({ onStart }: { onStart: () => void }) {
   return (
     <>
       <section className="mt-[162px] flex flex-col items-center text-center">
-        <AdnocLogo className="h-[52px] w-auto" />
-        <h1 className="mt-[40px] font-bold leading-none">
-          <span className="block text-[36.84px]">What's</span>
-          <span className="block glow-text text-[95.34px] mt-[8px] leading-[1.05]">YOUR</span>
-          <span className="block text-[36.84px] mt-[12px]">dream job?</span>
+        <AdnocLogo className="h-[52px] w-[103px] object-contain" />
+        <h1 className="mt-[34px] flex flex-col items-center font-bold leading-none">
+          <span className="block text-[36.84px] leading-[47px]">What's</span>
+          <img
+            src={welcomeYourUrl}
+            alt="YOUR"
+            draggable={false}
+            className="mt-[4px] w-[267px] max-w-full h-auto select-none"
+          />
+          <img
+            src={welcomeDreamJobUrl}
+            alt="dream job?"
+            draggable={false}
+            className="mt-[10px] w-[191px] max-w-full h-auto select-none"
+          />
         </h1>
-        <p className="mt-[30px] text-[13.61px] leading-[1.6] max-w-[245px]">
-          A few taps to find where you fit in the UAE's industrial future.
+        <p className="mt-[24px]">
+          <img
+            src={welcomeSubtitleUrl}
+            alt="A few taps to find where you fit in the UAE's industrial future."
+            draggable={false}
+            className="mx-auto w-[225px] max-w-full h-auto select-none"
+          />
         </p>
       </section>
       <div className="mt-auto pt-8">
         <PillButton onClick={onStart}>Let's find out</PillButton>
+        <GrabberBar />
       </div>
     </>
   );

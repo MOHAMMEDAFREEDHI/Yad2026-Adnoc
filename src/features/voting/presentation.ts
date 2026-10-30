@@ -1,24 +1,61 @@
 import { Briefcase, Building2, Cpu, Factory, HardHat, Lightbulb, type LucideIcon } from "lucide-react";
 
-import businessOwner from "@/assets/interim/business-owner.jpg.asset.json";
-import dataAi from "@/assets/interim/data-ai.jpg.asset.json";
-import industrialInvestor from "@/assets/interim/industrial-investor.jpg.asset.json";
-import industrialSpecialist from "@/assets/interim/industrial-specialist.jpg.asset.json";
-import privateSector from "@/assets/interim/private-sector.jpg.asset.json";
-import somethingElse from "@/assets/interim/something-else.jpg.asset.json";
 import type { OptionKey } from "./types";
+import imgBusiness from "@/assets/display/Poll option (4).png";
+import imgInvestor from "@/assets/display/Poll option (3).png";
+import imgPrivate from "@/assets/display/Poll option (2).png";
+import imgSpecialist from "@/assets/display/Poll option (1).png";
+import imgDataAi from "@/assets/display/Poll option.png";
 
-// Visual assets per option. Images are INTERIM crops from the LED reference
-// screenshot until the original card images are supplied. Icons are interim
-// line icons until the supplied icon set arrives.
+/**
+ * Visual assets per option.
+ * Original LED card portrait assets are pending delivery and intentionally set to `null`
+ * (replacing broken `/__l5e/assets-v1/...` Lovable cloud pointers).
+ * When the original files are supplied in `src/assets/`, import them here and assign to `image`.
+ */
 export const OPTION_VISUALS: Record<
   OptionKey,
-  { icon: LucideIcon; image: string; ledLabel: [string, string?] }
+  {
+    icon: LucideIcon;
+    image: string | null;
+    expectedAssetFile: string;
+    ledLabel: [string, string?];
+  }
 > = {
-  "business-owner": { icon: Briefcase, image: businessOwner.url, ledLabel: ["Business owner"] },
-  "industrial-investor": { icon: Factory, image: industrialInvestor.url, ledLabel: ["Industrial", "investor"] },
-  "private-sector": { icon: Building2, image: privateSector.url, ledLabel: ["Private-sector", "professional"] },
-  "industrial-specialist": { icon: HardHat, image: industrialSpecialist.url, ledLabel: ["Industrial", "specialist"] },
-  "data-ai": { icon: Cpu, image: dataAi.url, ledLabel: ["Data & AI", "in industry"] },
-  "something-else": { icon: Lightbulb, image: somethingElse.url, ledLabel: ["Something else"] },
+  "business-owner": {
+    icon: Briefcase,
+    image: imgBusiness,
+    expectedAssetFile: "src/assets/business-owner.jpg",
+    ledLabel: ["Business owner"],
+  },
+  "industrial-investor": {
+    icon: Factory,
+    image: imgInvestor,
+    expectedAssetFile: "src/assets/industrial-investor.jpg",
+    ledLabel: ["Industrial", "investor"],
+  },
+  "private-sector": {
+    icon: Building2,
+    image: imgPrivate,
+    expectedAssetFile: "src/assets/private-sector.jpg",
+    ledLabel: ["Private-sector", "professional"],
+  },
+  "industrial-specialist": {
+    icon: HardHat,
+    image: imgSpecialist,
+    expectedAssetFile: "src/assets/industrial-specialist.jpg",
+    ledLabel: ["Industrial", "specialist"],
+  },
+  "data-ai": {
+    icon: Cpu,
+    image: imgDataAi,
+    expectedAssetFile: "src/assets/data-ai.jpg",
+    ledLabel: ["Data & AI", "in industry"],
+  },
+  "something-else": {
+    icon: Lightbulb,
+    image: null,
+    expectedAssetFile: "src/assets/something-else.jpg",
+    ledLabel: ["Something else"],
+  },
 };

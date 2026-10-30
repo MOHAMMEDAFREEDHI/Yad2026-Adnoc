@@ -1,15 +1,18 @@
+import { HttpVotingService } from "./http-service";
 import { MockVotingService } from "./mock-service";
 import type { VotingService } from "./types";
 
 /**
  * Single place to swap the data source. When the backend API is ready, add an
- * HttpVotingService (fetch against import.meta.env.VITE_VOTE_API_URL) and return it here.
+ * HttpVotingService (fetch against import.meta.env["VITE_VOTE_API_URL"]) and return it here.
  * The browser must never connect to PostgreSQL directly.
  */
 let instance: VotingService | null = null;
 
 export function getVotingService(): VotingService {
-  return (instance ??= new MockVotingService());
+  // Mock until a real API is deliberately configured via VITE_VOTE_API_URL.
+  const apiUrl = (import.meta.env["VITE_VOTE_API_URL"] as string | undefined)?.trim();
+  return (instance ??= apiUrl ? new HttpVotingService(apiUrl) : new MockVotingService());
 }
 
 export function newIdempotencyKey() {

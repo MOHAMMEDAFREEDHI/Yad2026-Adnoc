@@ -88,9 +88,9 @@ export class MockVotingService implements VotingService {
     return { questionId, totalVotes, results, generatedAt: new Date().toISOString() };
   }
 
-  async getActiveQuestion(signal?: AbortSignal) {
-    await delay(this.opts.latencyMs ?? 150, signal);
-    return MOCK_QUESTION;
+  async getActiveQuestion(_signal?: AbortSignal) {
+    // Immediate return of the active mock question to avoid timing/abort race conditions.
+    return Promise.resolve(MOCK_QUESTION);
   }
 
   async submitVote(input: VoteSubmission, signal?: AbortSignal): Promise<VoteAccepted> {
