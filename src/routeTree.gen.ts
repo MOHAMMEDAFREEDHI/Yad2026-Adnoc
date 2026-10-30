@@ -12,6 +12,10 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as DisplayRouteImport } from './routes/display'
 import { Route as VoteRouteImport } from './routes/vote'
+import { Route as ApiHealthRouteImport } from './routes/api.health'
+import { Route as ApiVotesRouteImport } from './routes/api.votes'
+import { Route as ApiQuestionsActiveRouteImport } from './routes/api.questions.active'
+import { Route as ApiQuestionsIdResultsRouteImport } from './routes/api.questions.$id.results'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -28,35 +32,93 @@ const VoteRoute = VoteRouteImport.update({
   path: '/vote',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiHealthRoute = ApiHealthRouteImport.update({
+  id: '/api/health',
+  path: '/api/health',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiVotesRoute = ApiVotesRouteImport.update({
+  id: '/api/votes',
+  path: '/api/votes',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQuestionsActiveRoute = ApiQuestionsActiveRouteImport.update({
+  id: '/api/questions/active',
+  path: '/api/questions/active',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiQuestionsIdResultsRoute = ApiQuestionsIdResultsRouteImport.update({
+  id: '/api/questions/$id/results',
+  path: '/api/questions/$id/results',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/display': typeof DisplayRoute
   '/vote': typeof VoteRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/votes': typeof ApiVotesRoute
+  '/api/questions/active': typeof ApiQuestionsActiveRoute
+  '/api/questions/$id/results': typeof ApiQuestionsIdResultsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/display': typeof DisplayRoute
   '/vote': typeof VoteRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/votes': typeof ApiVotesRoute
+  '/api/questions/active': typeof ApiQuestionsActiveRoute
+  '/api/questions/$id/results': typeof ApiQuestionsIdResultsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/display': typeof DisplayRoute
   '/vote': typeof VoteRoute
+  '/api/health': typeof ApiHealthRoute
+  '/api/votes': typeof ApiVotesRoute
+  '/api/questions/active': typeof ApiQuestionsActiveRoute
+  '/api/questions/$id/results': typeof ApiQuestionsIdResultsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/display' | '/vote'
+  fullPaths:
+    | '/'
+    | '/display'
+    | '/vote'
+    | '/api/health'
+    | '/api/votes'
+    | '/api/questions/active'
+    | '/api/questions/$id/results'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/display' | '/vote'
-  id: '__root__' | '/' | '/display' | '/vote'
+  to:
+    | '/'
+    | '/display'
+    | '/vote'
+    | '/api/health'
+    | '/api/votes'
+    | '/api/questions/active'
+    | '/api/questions/$id/results'
+  id:
+    | '__root__'
+    | '/'
+    | '/display'
+    | '/vote'
+    | '/api/health'
+    | '/api/votes'
+    | '/api/questions/active'
+    | '/api/questions/$id/results'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DisplayRoute: typeof DisplayRoute
   VoteRoute: typeof VoteRoute
+  ApiHealthRoute: typeof ApiHealthRoute
+  ApiVotesRoute: typeof ApiVotesRoute
+  ApiQuestionsActiveRoute: typeof ApiQuestionsActiveRoute
+  ApiQuestionsIdResultsRoute: typeof ApiQuestionsIdResultsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -82,6 +144,34 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VoteRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/health': {
+      id: '/api/health'
+      path: '/api/health'
+      fullPath: '/api/health'
+      preLoaderRoute: typeof ApiHealthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/votes': {
+      id: '/api/votes'
+      path: '/api/votes'
+      fullPath: '/api/votes'
+      preLoaderRoute: typeof ApiVotesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/questions/active': {
+      id: '/api/questions/active'
+      path: '/api/questions/active'
+      fullPath: '/api/questions/active'
+      preLoaderRoute: typeof ApiQuestionsActiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/questions/$id/results': {
+      id: '/api/questions/$id/results'
+      path: '/api/questions/$id/results'
+      fullPath: '/api/questions/$id/results'
+      preLoaderRoute: typeof ApiQuestionsIdResultsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -89,6 +179,10 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DisplayRoute: DisplayRoute,
   VoteRoute: VoteRoute,
+  ApiHealthRoute: ApiHealthRoute,
+  ApiVotesRoute: ApiVotesRoute,
+  ApiQuestionsActiveRoute: ApiQuestionsActiveRoute,
+  ApiQuestionsIdResultsRoute: ApiQuestionsIdResultsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

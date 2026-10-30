@@ -15,10 +15,18 @@ export function getVotingService(): VotingService {
   return (instance ??= apiUrl ? new HttpVotingService(apiUrl) : new MockVotingService());
 }
 
+/** Test helper to override or reset the singleton when testing HttpVotingService vs MockVotingService. */
+export function _setVotingServiceForTests(svc: VotingService | null) {
+  instance = svc;
+}
+
 export function newIdempotencyKey() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto
     ? crypto.randomUUID()
-    : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+    : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        return (c === "x" ? r : (r & 0x3) | 0x8).toString(16);
+      });
 }
 
 export const VOTE_ERROR_MESSAGES = {

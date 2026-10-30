@@ -13,7 +13,7 @@ describe("HttpVotingService", () => {
     await s.submitVote(sub);
     const [url, init] = f.mock.calls[0] as unknown as [string, RequestInit];
     expect(url).toBe("https://api.test/api/votes");
-    expect(JSON.parse(init.body as string)).toEqual(sub);
+    expect(JSON.parse(init.body as string)).toEqual({ questionId: "q", answerOptionId: "o", idempotencyKey: "k" });
   });
 
   it.each([

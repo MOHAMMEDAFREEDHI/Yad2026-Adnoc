@@ -1,5 +1,6 @@
 import {
   VoteError,
+  type OptionKey,
   type Question,
   type ResultsSnapshot,
   type VoteAccepted,
@@ -22,6 +23,18 @@ const STATUS_TO_CODE: Record<number, VoteErrorCode> = {
 };
 
 const POLL_INTERVAL_MS = 5000;
+
+interface ApiActiveQuestion {
+  event: { id: string };
+  question: { id: string; prompt: string; subtitle: string | null };
+  options: { id: string; label: string; description: string | null; iconKey: string | null; displayOrder: number }[];
+}
+interface ApiResults {
+  questionId: string;
+  totalResponses: number;
+  generatedAt: string;
+  results: { answerOptionId: string; voteCount: number; percentage: number }[];
+}
 
 export class HttpVotingService implements VotingService {
   readonly isSimulated = false;
@@ -51,16 +64,48 @@ export class HttpVotingService implements VotingService {
     }
   }
 
-  getActiveQuestion(signal?: AbortSignal) {
-    return this.request<Question>("/api/questions/active", undefined, signal);
+  async getActiveQuestion(signal?: AbortSignal): Promise<Question> {
+    const r = await this.request<ApiActiveQuestion>("/api/questions/active", undefined, signal);
+    return {
+      id: r.question.id,
+      eventId: r.event.id,
+      title: r.question.prompt,
+      prompt: r.question.subtitle ?? "",
+      status: "active", // the API only returns a question when it is open for voting
+      options: r.options.map((o) => ({
+        id: o.id,
+        key: (o.iconKey ?? "") as OptionKey,
+        label: o.label,
+        description: o.description ?? "",
+        sortOrder: o.displayOrder,
+      })),
+    };
   }
 
-  submitVote(input: VoteSubmission, signal?: AbortSignal) {
-    return this.request<VoteAccepted>("/api/votes", { method: "POST", body: JSON.stringify(input) }, signal);
+  async submitVote(input: VoteSubmission, signal?: AbortSignal): Promise<VoteAccepted> {
+    const r = await this.request<{ voteId: string; questionId: string; answerOptionId: string; acceptedAt: string }>(
+      "/api/votes",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          questionId: input.questionId,
+          answerOptionId: input.optionId,
+          idempotencyKey: input.idempotencyKey,
+        }),
+      },
+      signal,
+    );
+    return { voteId: r.voteId, questionId: r.questionId, optionId: r.answerOptionId, acceptedAt: r.acceptedAt };
   }
 
-  getResults(questionId: string, signal?: AbortSignal) {
-    return this.request<ResultsSnapshot>(`/api/questions/${encodeURIComponent(questionId)}/results`, undefined, signal);
+  async getResults(questionId: string, signal?: AbortSignal): Promise<ResultsSnapshot> {
+    const r = await this.request<ApiResults>(`/api/questions/${encodeURIComponent(questionId)}/results`, undefined, signal);
+    return {
+      questionId: r.questionId,
+      totalVotes: r.totalResponses,
+      results: r.results.map((x) => ({ optionId: x.answerOptionId, count: x.voteCount, percent: x.percentage })),
+      generatedAt: r.generatedAt,
+    };
   }
 
   /** Polling fallback; swap for SSE/WebSocket once the backend offers realtime. */
