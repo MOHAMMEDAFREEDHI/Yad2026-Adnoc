@@ -2,6 +2,7 @@ import { ArrowLeft, Check } from "lucide-react";
 import { useEffect, useRef, type ReactNode } from "react";
 
 import adnocLogoUrl from "@/assets/Adnoc Logo.png";
+import adnocVerticalCardUrl from "@/assets/welcome/adnoc_vertical_card.png";
 import backgroundVideoUrl from "@/assets/background-video.mp4";
 import mobileBgPosterUrl from "@/assets/voting/Asset 2@3x 2.png";
 import grabberUrl from "@/assets/voting/Grabber.png";
@@ -100,6 +101,27 @@ export function GrabberBar() {
   );
 }
 
+export function ChooseTopBar({ onBack }: { onBack: () => void }) {
+  return (
+    <div className="choose-header">
+      <button
+        type="button"
+        className="glass-back !size-[calc(42*var(--k))] !rounded-[calc(14*var(--k))] mt-[calc(19*var(--k))]"
+        onClick={onBack}
+        aria-label="Back"
+      >
+        <ArrowLeft size={22} strokeWidth={2} className="!size-[calc(22*var(--k))]" />
+      </button>
+      <img
+        src={adnocVerticalCardUrl}
+        alt="ADNOC"
+        draggable={false}
+        className="h-[calc(75*var(--k))] w-[calc(49.7*var(--k))] object-contain select-none"
+      />
+    </div>
+  );
+}
+
 export function TopBar({ onBack }: { onBack: () => void }) {
   return (
     <div className="flex items-start justify-between">
@@ -111,14 +133,28 @@ export function TopBar({ onBack }: { onBack: () => void }) {
   );
 }
 
-export function ProgressRow({ percent, className = "" }: { percent: number | null; className?: string }) {
+export function ProgressRow({
+  percent,
+  className = "",
+  scaled = false,
+}: {
+  percent: number | null;
+  className?: string;
+  scaled?: boolean;
+}) {
   const p = percent ?? 0;
   return (
-    <div className={`flex items-center gap-[9.55px] ${className}`}>
+    <div className={`flex items-center ${scaled ? "gap-[calc(9.55*var(--k))]" : "gap-[9.55px]"} ${className}`}>
       <div className="progress-track flex-1" role="presentation">
         <div className="progress-fill" style={{ width: `${p}%` }} />
       </div>
-      <span className="font-card text-[10.7419px] leading-[12px] font-bold w-[23.87px] flex-none text-right">
+      <span
+        className={`font-card font-bold flex-none text-right ${
+          scaled
+            ? "text-[calc(10.74*var(--k))] leading-[calc(12*var(--k))] w-[calc(23.87*var(--k))]"
+            : "text-[10.7419px] leading-[12px] w-[23.87px]"
+        }`}
+      >
         {percent === null ? "–" : `${p}%`}
       </span>
     </div>
@@ -146,12 +182,16 @@ export function OptionCard({
       aria-checked={selected}
       disabled={disabled}
       onClick={onSelect}
-      className="option-card"
+      className="option-card option-card-fit"
     >
-      <Icon size={20.81} strokeWidth={1.5} aria-hidden className="flex-none" />
-      <span className="mt-[8.6px] font-brand text-[13.129px] font-bold leading-[15px]">{option.label}</span>
-      <span className="mt-[3.18px] font-brand text-[11.5376px] font-normal leading-[14px] text-subtle">{option.description}</span>
-      <ProgressRow percent={percent} className="mt-auto pt-2" />
+      <Icon size={20.81} strokeWidth={1.5} aria-hidden className="flex-none !size-[calc(20.81*var(--k))]" />
+      <span className="mt-[calc(8.6*var(--k))] font-brand text-[calc(13.13*var(--k))] font-bold leading-[calc(15*var(--k))]">
+        {option.label}
+      </span>
+      <span className="mt-[calc(3.18*var(--k))] font-brand text-[calc(11.54*var(--k))] font-normal leading-[calc(14*var(--k))] text-subtle">
+        {option.description}
+      </span>
+      <ProgressRow percent={percent} scaled className="mt-auto pt-[calc(5*var(--k))]" />
     </button>
   );
 }

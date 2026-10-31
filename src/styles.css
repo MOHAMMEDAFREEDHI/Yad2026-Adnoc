@@ -163,6 +163,48 @@
   display: flex;
   flex-direction: column;
   padding: 25px 16px calc(24px + env(safe-area-inset-bottom, 0px));
+  /* --k = one Figma px (402x832 artboard), scaled down to the real viewport so the screen always fits. */
+  --k: min(1px, calc(100vw / 402));
+  --k: min(1px, calc(100dvh / 832), calc(100vw / 402));
+}
+
+/* Voting selection: one vertically constrained column (header / grid / footer). */
+@utility mobile-frame-fit {
+  height: 100vh;
+  height: 100dvh;
+  min-height: 0;
+  padding: calc(17 * var(--k)) calc(16 * var(--k)) calc(40 * var(--k) + env(safe-area-inset-bottom, 0px));
+}
+
+@utility choose-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: calc(75 * var(--k));
+  flex: none;
+}
+
+@utility choose-intro {
+  flex: none;
+  margin-top: calc(20 * var(--k));
+  text-align: center;
+}
+
+@utility choose-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-rows: repeat(3, minmax(0, 1fr));
+  gap: calc(11.14 * var(--k)) calc(10.34 * var(--k));
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: calc(437 * var(--k));
+  margin-top: calc(23 * var(--k));
+}
+
+@utility choose-footer {
+  flex: none;
+  margin-top: auto;
+  padding-top: calc(12 * var(--k));
 }
 
 @utility glow-text {
@@ -241,6 +283,7 @@
   text-align: left;
   padding: 15.6859px 12.2001px 17.4288px;
   min-height: 137.66px;
+  min-width: 0;
   border-radius: 10px;
   background: transparent;
   border: 1.74288px solid var(--border);
@@ -430,4 +473,12 @@
   color: rgba(36, 214, 243, 0.94);
   font-variant-numeric: tabular-nums;
   flex: none;
+}
+
+/* Option cards inside the fitted voting grid scale with --k and never force a fixed height. */
+@utility option-card-fit {
+  min-height: 0;
+  overflow: hidden;
+  padding: calc(14 * var(--k)) calc(12.2 * var(--k)) calc(13 * var(--k));
+  border-radius: calc(10 * var(--k));
 }

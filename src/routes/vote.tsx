@@ -12,6 +12,7 @@ import {
   BackgroundVideo,
   OptionCard,
   PillButton,
+  ChooseTopBar,
   SelectedSummary,
   TopBar,
 } from "@/features/voting/components/MobileUI";
@@ -231,7 +232,7 @@ function VotePage() {
           className="mobile-overlay-bottom"
         />
       )}
-      <div className="mobile-frame">
+      <div className={`mobile-frame ${step === "choose" ? "mobile-frame-fit" : ""}`}>
         {step === "welcome" && (
           <Welcome
             onStart={() => {
@@ -245,21 +246,21 @@ function VotePage() {
 
         {step === "choose" && (
           <>
-            <TopBar onBack={() => setStep("welcome")} />
-            <header className="mt-[26px] text-center">
-              <p className="text-[16px] font-semibold">Tap your choice</p>
-              <h1 className="mt-[14px] text-[28px] font-bold leading-[1.22] uppercase">
+            <ChooseTopBar onBack={() => setStep("welcome")} />
+            <header className="choose-intro">
+              <p className="text-[calc(16*var(--k))] font-semibold leading-[calc(16*var(--k))]">Tap your choice</p>
+              <h1 className="mt-[calc(15*var(--k))] text-[calc(27*var(--k))] font-bold leading-[calc(34*var(--k))] uppercase">
                 Your future in
                 <br />
                 UAE industry
               </h1>
-              <p className="mt-[14px] text-[16px] font-semibold">
+              <p className="mt-[calc(16*var(--k))] text-[calc(16*var(--k))] font-semibold leading-[calc(20*var(--k))]">
                 Which one is <span className="text-cyan">YOU?</span>
               </p>
             </header>
 
             {question ? (
-              <div role="radiogroup" aria-label={question.prompt} className="mt-[22px] grid grid-cols-2 gap-x-[10.34px] gap-y-[11.14px]">
+              <div role="radiogroup" aria-label={question.prompt} className="choose-grid">
                 {question.options.map((o) => (
                   <OptionCard
                     key={o.id}
@@ -291,7 +292,7 @@ function VotePage() {
               <p className="mt-10 text-center text-subtle" aria-live="polite">Loading…</p>
             )}
 
-            <div className="mt-auto pt-6">
+            <div className="choose-footer">
               {submitError && (
                 <p role="alert" className="mb-3 text-center text-[14px] font-medium text-subtle">
                   {submitError}
