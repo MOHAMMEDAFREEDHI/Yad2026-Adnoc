@@ -12,7 +12,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { FingerprintAppProvider } from "@/components/FingerprintAppProvider";
-import { reportLovableError } from "../lib/lovable-error-reporting";
+import { reportClientError } from "../lib/error-reporting";
 
 function NotFoundComponent() {
   return (
@@ -40,7 +40,7 @@ function ErrorComponent({ error, reset }: ErrorComponentProps) {
   console.error(error);
   const router = useRouter();
   useEffect(() => {
-    reportLovableError(error, { boundary: "tanstack_root_error_component" });
+    reportClientError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
 
   return (
@@ -79,8 +79,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
-      { title: "ADIPEC 2026 — ADNOC voting" },
-      { name: "description", content: "ADNOC voting microsite for ADIPEC 2026." },
+      { title: "ADNOC Young Voting Microsite — ADIPEC 2026" },
+      {
+        name: "description",
+        content: "ADNOC Young Voting Microsite for ADIPEC 2026 interactive voting.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],

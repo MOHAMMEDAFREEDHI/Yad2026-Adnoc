@@ -17,6 +17,14 @@ import {
 import { getActiveQuestion } from "@/server/repository";
 
 if (process.env["RUN_PG_INTEGRATION"] === "1") {
+  if (typeof process.loadEnvFile === "function" && fs.existsSync(".env")) {
+    try {
+      process.loadEnvFile(".env");
+      delete process.env["FINGERPRINT_SECRET_API_KEY"];
+    } catch {
+      // Ignore if .env cannot be loaded
+    }
+  }
   loadConfig();
 }
 

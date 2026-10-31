@@ -1,5 +1,6 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "adnoc-young-voting-microsite",
+  "description": "ADNOC Young Voting Microsite — ADIPEC 2026 interactive voting application and live display.",
   "private": true,
   "sideEffects": false,
   "type": "module",

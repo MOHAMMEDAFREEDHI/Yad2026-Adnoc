@@ -193,19 +193,24 @@ Executes a read-only database check (`current_database()` and `pg_stat_ssl`).
   - Same `idempotencyKey` + same option returns HTTP `200` with `"replayed": true`.
   - Same `idempotencyKey` + different option returns HTTP `409` with code `"IDEMPOTENCY_CONFLICT"`.
 
-- **Anonymous One-Time Voting Policy (`VOTE_POLICY=one_vote_per_browser`)**:
-  - **Visitor ID Generation**: On first visit, the backend generates a cryptographically secure random visitor ID (`crypto.randomUUID()`) and sets a persistent cookie:
-    - Cookie Name: `adnoc_vid`
-    - Attributes: `HttpOnly`, `SameSite=Lax`, `Path=/`, `Max-Age=34560000` (400 days), and `Secure` in production environments.
-    - Security note: `localStorage` is explicitly not used as the security mechanism.
-  - **Server-Side HMAC-SHA256**: On vote submission and question fetch, the backend computes a server-side HMAC-SHA256 hash using `VISITOR_HMAC_SECRET`. The raw visitor ID is never stored in AWS RDS, guaranteeing attendee privacy.
+- **Anonymous One-Time Voting with Fingerprint Pro & HMAC Integrity**:
+  - **Device Identification**: When an attendee interacts with `/vote`, Fingerprint Pro identifies the browser/device and issues an identification event ID.
+  - **Authoritative Server Verification (`src/server/fingerprint.ts`)**:
+    - The backend validates the event ID via HTTPS with the Fingerprint Server API v4 regional endpoint (`https://ap.api.fpjs.io/v4/events/{event_id}`) using Bearer authentication (`Authorization: Bearer <secretKey>`).
+    - The event origin is strictly validated against allowed origins (`CORS_ALLOWED_ORIGINS`). Events from unapproved origins return HTTP `403 FINGERPRINT_ORIGIN_MISMATCH`.
+    - If the event does not exist in the configured workspace, the backend returns HTTP `403 FINGERPRINT_EVENT_NOT_FOUND`.
+    - If the verification service is temporarily down, the backend returns HTTP `503 FINGERPRINT_UNAVAILABLE` (votes are never accepted without verification).
+  - **Server-Side Namespaced HMAC-SHA256 (`src/server/visitor.ts`)**:
+    - The backend computes a server-side HMAC-SHA256 hash using the secret salt:
+      $$\text{hash} = \text{HMAC-SHA256}("fp:" + \text{visitorId}, \text{VISITOR\_HMAC\_SECRET})$$
+    - Raw visitor IDs are never saved in AWS RDS, guaranteeing attendee privacy.
   - **Event Participation Storage (`event_participations`)**:
     - Stores `(id, event_id, visitor_id_hash, created_at)`.
     - Enforces database constraint `CONSTRAINT event_participations_event_visitor_unique UNIQUE (event_id, visitor_id_hash)`.
   - **Atomic Transaction**: The event participation record and vote record are saved atomically inside a single PostgreSQL transaction (`BEGIN ... COMMIT`). If either write fails, the entire transaction rolls back.
   - **Subsequent Visit & Repeat Voting Rejection**:
-    - Subsequent visits to `/api/questions/active` from the same browser profile check `event_participations` and return `"hasVoted": true`.
-    - Duplicate vote submissions with a new idempotency key from the same browser profile are rejected with HTTP `409` and error code `"ALREADY_VOTED"`:
+    - Subsequent visits to `/api/questions/active` from the same device (including across Chrome, Edge, Safari, and incognito sessions) return `"hasVoted": true`.
+    - Duplicate vote submissions are rejected with HTTP `409` and error code `"ALREADY_VOTED"`:
       ```json
       {
         "error": {
@@ -215,10 +220,8 @@ Executes a read-only database check (`current_database()` and `pg_stat_ssl`).
       }
       ```
     - The voting UI displays: _"You've already voted! Your response has been successfully recorded. Thank you for participating."_ and disables the Proceed button.
-  - **Important Limitations**:
-    - This is one vote per browser profile, not guaranteed one vote per physical phone (separate browsers or Incognito sessions create distinct profiles).
-    - Existing votes submitted before this implementation have no visitor identifier; they are preserved and never associated or deleted.
-    - Setting `VOTE_POLICY=unrestricted` disables the one-vote-per-browser restriction while preserving request idempotency.
+  - **Fallback / Unconfigured Mode**: In local development when `FINGERPRINT_SECRET_API_KEY` is not set, the backend falls back to standard HTTP-only cookie HMAC tracking (`adnoc_vid`) or simulated mode.
+  - Setting `VOTE_POLICY=unrestricted` disables the one-vote-per-visitor restriction while preserving request idempotency.
 
 ---
 

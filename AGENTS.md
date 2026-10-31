@@ -1,19 +1,12 @@
-<!-- LOVABLE:BEGIN -->
+# ADNOC Young Voting Microsite — Engineering Guidelines
 
-> [!IMPORTANT]
-> This project is connected to [Lovable](https://lovable.dev). Avoid rewriting
-> published git history — force pushing, or rebasing/amending/squashing commits
-> that are already pushed — as it rewrites history on Lovable's side and the
-> user will likely lose their project history.
->
-> Commits you push to the connected branch sync back to Lovable and show up in
-> the editor, so keep the branch in a working state.
+## Architecture & Code Boundaries
 
-<!-- LOVABLE:END -->
-
-## Project rules
-
-- Voting UI talks only to the `VotingService` interface (src/features/voting/types.ts); swap implementations in service.ts. Why: the real backend/AWS RDS API is owned by another developer and must drop in without UI rewrites.
-- Never connect to PostgreSQL or hold DB credentials in this app. Why: browser code is public; the backend is the only DB client.
-- Design values come from the supplied Figma CSS exports and live as tokens/@utility classes in src/styles.css. Why: the screenshots are the source of truth.
-- See docs/voting-integration.md for API contract and open items.
+- **Voting UI Contract**: The frontend voting UI components interact exclusively through the `VotingService` interface (`src/features/voting/types.ts`). Swap between simulated mode (`MockVotingService`) and live HTTP mode (`HttpVotingService`) in `src/features/voting/service.ts` via `VITE_VOTE_API_URL`.
+- **Database Isolation**: Browser bundles must never import `pg`, database pools, or server secrets. All PostgreSQL access is strictly confined to server-side routes (`src/server/` and `src/routes/api.*.ts`).
+- **Visitor Identification & Anti-Abuse**:
+  - Browser identification is powered by Fingerprint Pro (`@fingerprint/react`) on the client and verified server-side (`src/server/fingerprint.ts`).
+  - Visitor IDs are never stored raw in AWS RDS; all participation records store server-side HMAC-SHA256 hashes (`src/server/visitor.ts`).
+  - Database transactions enforce atomic participation and vote insertion with unique constraints.
+- **Design System**: Visual values and typography live as CSS tokens and utilities in `src/styles.css`.
+- **Documentation**: For backend schema and API specifications, refer to `docs/backend.md`. For overall integration details, refer to `docs/voting-integration.md`.

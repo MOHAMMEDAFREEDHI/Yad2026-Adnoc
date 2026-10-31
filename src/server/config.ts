@@ -29,7 +29,11 @@ let dotEnvLoaded = false;
 function ensureLocalDotEnvLoaded(env: NodeJS.ProcessEnv) {
   if (dotEnvLoaded || env !== process.env) return;
   dotEnvLoaded = true;
-  if (typeof process.loadEnvFile === "function" && fs.existsSync(".env")) {
+  if (
+    process.env["NODE_ENV"] !== "test" &&
+    typeof process.loadEnvFile === "function" &&
+    fs.existsSync(".env")
+  ) {
     try {
       process.loadEnvFile(".env");
     } catch {
