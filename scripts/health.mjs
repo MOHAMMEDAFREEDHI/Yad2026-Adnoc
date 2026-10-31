@@ -13,14 +13,38 @@ if (!hasEnvConfig) {
   process.exit(1);
 }
 
+function getCa() {
+  const caBase64 = process.env.DB_SSL_CA_BASE64;
+  if (caBase64 && caBase64.trim()) {
+    const decoded = Buffer.from(caBase64.trim(), "base64").toString("utf8");
+    if (!decoded.includes("-----BEGIN CERTIFICATE-----")) {
+      throw new Error("Invalid DB_SSL_CA_BASE64: not a valid PEM certificate.");
+    }
+    return decoded;
+  }
+  const caPath = process.env.DB_SSL_CA_PATH;
+  if (caPath && caPath.trim()) {
+    if (!fs.existsSync(caPath.trim())) {
+      throw new Error(`DB_SSL_CA_PATH certificate file not found: "${caPath.trim()}".`);
+    }
+    const content = fs.readFileSync(caPath.trim(), "utf8");
+    if (!content.includes("-----BEGIN CERTIFICATE-----")) {
+      throw new Error(
+        `DB_SSL_CA_PATH certificate file "${caPath.trim()}" is not a valid PEM certificate.`,
+      );
+    }
+    return content;
+  }
+  return undefined;
+}
+
+const ca = getCa();
 const ssl =
   (process.env.DB_SSL ?? "true") === "false"
     ? false
     : {
         rejectUnauthorized: (process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "true") !== "false",
-        ...(process.env.DB_SSL_CA_PATH
-          ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH, "utf8") }
-          : {}),
+        ...(ca ? { ca } : {}),
       };
 
 const c = new pg.Client({

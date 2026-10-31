@@ -42,6 +42,75 @@ function ensureLocalDotEnvLoaded(env: NodeJS.ProcessEnv) {
   }
 }
 
+export function resolveCaCertificate(env: NodeJS.ProcessEnv): string | undefined {
+  const caBase64 = env["DB_SSL_CA_BASE64"];
+  if (caBase64 !== undefined) {
+    if (caBase64.length > 0 && caBase64.trim() === "") {
+      throw new Error("DB_SSL_CA_BASE64 is configured but contains only whitespace.");
+    }
+    if (caBase64.trim() !== "") {
+      const trimmed = caBase64.trim();
+      let decoded: string;
+      try {
+        decoded = Buffer.from(trimmed, "base64").toString("utf8");
+      } catch (err) {
+        throw new Error(
+          `Failed to decode DB_SSL_CA_BASE64: ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      if (!decoded.trim()) {
+        throw new Error("DB_SSL_CA_BASE64 is malformed: decoded certificate is empty.");
+      }
+      if (
+        !decoded.includes("-----BEGIN CERTIFICATE-----") ||
+        !decoded.includes("-----END CERTIFICATE-----")
+      ) {
+        throw new Error(
+          "DB_SSL_CA_BASE64 is malformed: decoded content does not contain a valid PEM certificate ('-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' required).",
+        );
+      }
+      return decoded;
+    }
+  }
+
+  const caPath = env["DB_SSL_CA_PATH"];
+  if (caPath !== undefined) {
+    if (caPath.length > 0 && caPath.trim() === "") {
+      throw new Error("DB_SSL_CA_PATH is configured but contains only whitespace.");
+    }
+    if (caPath.trim() !== "") {
+      const trimmedPath = caPath.trim();
+      if (!fs.existsSync(trimmedPath)) {
+        throw new Error(
+          `DB_SSL_CA_PATH certificate file not found: "${trimmedPath}". Ensure the file exists or configure DB_SSL_CA_BASE64.`,
+        );
+      }
+      let content: string;
+      try {
+        content = fs.readFileSync(trimmedPath, "utf8");
+      } catch (err) {
+        throw new Error(
+          `Failed to read certificate from DB_SSL_CA_PATH "${trimmedPath}": ${err instanceof Error ? err.message : String(err)}`,
+        );
+      }
+      if (!content.trim()) {
+        throw new Error(`DB_SSL_CA_PATH certificate file "${trimmedPath}" is empty.`);
+      }
+      if (
+        !content.includes("-----BEGIN CERTIFICATE-----") ||
+        !content.includes("-----END CERTIFICATE-----")
+      ) {
+        throw new Error(
+          `DB_SSL_CA_PATH certificate file "${trimmedPath}" does not contain a valid PEM certificate ('-----BEGIN CERTIFICATE-----' and '-----END CERTIFICATE-----' required).`,
+        );
+      }
+      return content;
+    }
+  }
+
+  return undefined;
+}
+
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
   ensureLocalDotEnvLoaded(env);
   const policy = (env["VOTE_POLICY"] ?? "one_vote_per_browser") as
@@ -64,14 +133,15 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): ServerConfig {
       `QUESTION_ACTIVE_STATUS "${questionActiveStatus}" is invalid. Allowed values: ${QUESTION_STATUSES.join(", ")}.`,
     );
   }
-  const caPath = env["DB_SSL_CA_PATH"];
-  const ssl =
-    (env["DB_SSL"] ?? "true") === "false"
-      ? false
-      : {
-          rejectUnauthorized: (env["DB_SSL_REJECT_UNAUTHORIZED"] ?? "true") !== "false",
-          ...(caPath ? { ca: fs.readFileSync(caPath, "utf8") } : {}),
-        };
+  const isSslEnabled = (env["DB_SSL"] ?? "true") !== "false";
+  let ssl: ServerConfig["ssl"] = false;
+  if (isSslEnabled) {
+    const ca = resolveCaCertificate(env);
+    ssl = {
+      rejectUnauthorized: (env["DB_SSL_REJECT_UNAUTHORIZED"] ?? "true") !== "false",
+      ...(ca ? { ca } : {}),
+    };
+  }
   return {
     databaseUrl: env["DATABASE_URL"] || undefined,
     ssl,

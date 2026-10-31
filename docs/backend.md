@@ -11,7 +11,7 @@ The backend is integrated directly into the TanStack Start application and never
   - [`src/routes/api.health.ts`](../src/routes/api.health.ts) → `GET /api/health`
 - **HTTP Handlers ([`src/server/handlers.ts`](../src/server/handlers.ts))**: Zod input validation, CORS origin allow-list, fixed-window per-IP rate limiting, and structured error mapping (`{ error: { code, message } }`).
 - **Repository ([`src/server/repository.ts`](../src/server/repository.ts))**: SQL queries, transaction-safe vote submission, idempotency verification, and authoritative vote-count aggregation using [`computeResults`](../src/features/voting/results.ts).
-- **Database Pool ([`src/server/db.ts`](../src/server/db.ts))**: Shared singleton `pg.Pool` with AWS RDS TLS support (`DB_SSL=true`, optional `DB_SSL_CA_PATH`).
+- **Database Pool ([`src/server/db.ts`](../src/server/db.ts))**: Shared singleton `pg.Pool` with AWS RDS TLS support (`DB_SSL=true`, `DB_SSL_CA_BASE64` on serverless/Vercel, or `DB_SSL_CA_PATH` locally).
 - **Frontend Client ([`src/features/voting/http-service.ts`](../src/features/voting/http-service.ts))**: Implements [`VotingService`](../src/features/voting/types.ts). Activated in [`src/features/voting/service.ts`](../src/features/voting/service.ts) when `VITE_VOTE_API_URL` is set (`VITE_VOTE_API_URL=/` for same-origin deployment). When `VITE_VOTE_API_URL` is empty, the frontend uses [`MockVotingService`](../src/features/voting/mock-service.ts).
 
 ---
@@ -19,7 +19,10 @@ The backend is integrated directly into the TanStack Start application and never
 ## 2. Environment Configuration & Database Setup
 
 1. Copy [`.env.example`](../.env.example) to `.env` (which is git-ignored) and configure `DATABASE_URL` (or `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`). Never prefix backend secrets with `VITE_`.
-2. For full AWS RDS TLS verification, download the AWS RDS global CA bundle (`global-bundle.pem`) and set `DB_SSL_CA_PATH` with `DB_SSL_REJECT_UNAUTHORIZED=true`.
+2. For full AWS RDS TLS verification:
+   - On serverless/Vercel: set `DB_SSL_CA_BASE64` to the base64-encoded PEM CA certificate.
+   - In local development: set `DB_SSL_CA_PATH` to the certificate file path (e.g. `./certs/aws-rds/ap-south-1-bundle.pem`).
+   - Always keep `DB_SSL=true` and `DB_SSL_REJECT_UNAUTHORIZED=true`.
 3. **Read-Only Health Check**:
    ```bash
    npm run db:health
