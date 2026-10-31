@@ -393,6 +393,44 @@ describe("Fingerprint Pro Server-Side Event Verification", () => {
       ),
     ).rejects.toThrow(/unapproved origin/);
   });
+
+  it("detects and rejects if FINGERPRINT_SECRET_API_KEY is configured with the Public API Key", async () => {
+    const prev = process.env["VITE_FINGERPRINT_PUBLIC_API_KEY"];
+    process.env["VITE_FINGERPRINT_PUBLIC_API_KEY"] = "fwI6CkylLzng5Tq3RRpT";
+    try {
+      await expect(
+        verifyFingerprintEvent("any_event_id", "fwI6CkylLzng5Tq3RRpT", "ap"),
+      ).rejects.toThrow(/configured with the Public API Key instead of a Secret API Key/);
+    } finally {
+      if (prev !== undefined) process.env["VITE_FINGERPRINT_PUBLIC_API_KEY"] = prev;
+      else delete process.env["VITE_FINGERPRINT_PUBLIC_API_KEY"];
+    }
+  });
+
+  it("extracts and includes detailed server message on 401/403 authentication failure", async () => {
+    const mockFetch = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({
+            error: {
+              code: "secret_api_key_not_found",
+              message: "no fingerprint workspace found for specified secret API key",
+            },
+          }),
+          { status: 403, headers: { "Content-Type": "application/json" } },
+        ),
+    );
+
+    await expect(
+      verifyFingerprintEvent(
+        "any_event_id",
+        "invalid_secret_key",
+        "ap",
+        [],
+        mockFetch as unknown as typeof fetch,
+      ),
+    ).rejects.toThrow(/no fingerprint workspace found for specified secret API key/);
+  });
 });
 
 describe("Cross-Browser Anonymous Voting with Fingerprint Pro", () => {

@@ -65,6 +65,18 @@ export async function verifyFingerprintEvent(
     );
   }
 
+  const publicClientKey = process.env["VITE_FINGERPRINT_PUBLIC_API_KEY"]?.trim();
+  if (publicClientKey && secretApiKey.trim() === publicClientKey) {
+    console.error(
+      "[fingerprint] configuration error: FINGERPRINT_SECRET_API_KEY matches VITE_FINGERPRINT_PUBLIC_API_KEY. A Secret API Key from dashboard.fingerprint.com is required.",
+    );
+    throw new ApiError(
+      500,
+      "FINGERPRINT_CONFIG_ERROR",
+      "FINGERPRINT_SECRET_API_KEY is configured with the Public API Key instead of a Secret API Key. Generate a Secret Key in the Fingerprint dashboard.",
+    );
+  }
+
   // Regional endpoint for Fingerprint Pro Server API v4
   // - ap: Asia Pacific (Mumbai): https://ap.api.fpjs.io/v4
   // - eu: EU: https://eu.api.fpjs.io/v4
@@ -118,11 +130,20 @@ export async function verifyFingerprintEvent(
   }
 
   if (res.status === 401 || res.status === 403) {
-    console.error("[fingerprint] server authentication error status:", res.status);
+    let detail = "";
+    try {
+      const errBody = (await res.json()) as { error?: { code?: string; message?: string } };
+      detail = errBody?.error?.message || errBody?.error?.code || "";
+    } catch {
+      // ignore
+    }
+    console.error(
+      `[fingerprint] server authentication error status ${res.status}${detail ? `: ${detail}` : ""}`,
+    );
     throw new ApiError(
       500,
       "FINGERPRINT_AUTH_FAILED",
-      "Fingerprint server authentication failed. Verify server secret key.",
+      `Fingerprint server authentication failed (${res.status}${detail ? `: ${detail}` : ""}). Verify server secret key.`,
     );
   }
 

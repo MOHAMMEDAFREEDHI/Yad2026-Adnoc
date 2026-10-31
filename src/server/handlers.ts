@@ -79,8 +79,19 @@ async function guard(
   kind: "vote" | "read",
   run: (visitor: ReturnType<typeof getOrCreateVisitor>) => Promise<Response>,
 ): Promise<Response> {
+  const correlationId =
+    req.headers.get("x-correlation-id") ||
+    req.headers.get("x-request-id") ||
+    (typeof crypto !== "undefined" && "randomUUID" in crypto
+      ? crypto.randomUUID()
+      : Math.random().toString(36).substring(2));
+
   if (req.method === "OPTIONS")
-    return new Response(null, { status: 204, headers: corsHeaders(req) });
+    return new Response(null, {
+      status: 204,
+      headers: { ...corsHeaders(req), "x-correlation-id": correlationId },
+    });
+
   const cfg = loadConfig();
   if (
     rateLimited(`${kind}:${clientIp(req)}`, kind === "vote" ? cfg.votesPerMin : cfg.readsPerMin)
@@ -89,21 +100,50 @@ async function guard(
       req,
       429,
       { error: { code: "RATE_LIMITED", message: "Too many requests." } },
-      { "Retry-After": "60" },
+      { "Retry-After": "60", "x-correlation-id": correlationId },
     );
   }
+
   const visitor = getOrCreateVisitor(req);
-  const extraHeaders: Record<string, string> = {};
+  const extraHeaders: Record<string, string> = {
+    "x-correlation-id": correlationId,
+  };
   if (visitor.cookieToSet) {
     extraHeaders["Set-Cookie"] = visitor.cookieToSet;
   }
+
+  const route = new URL(req.url, "http://localhost").pathname;
+
   try {
     return await run(visitor);
   } catch (e) {
-    if (e instanceof ApiError) return fail(req, e.status, e.code, e.message, extraHeaders);
-    // Never leak DB internals to the client; log only the message.
-    console.error("[api] unexpected error:", e instanceof Error ? e.message : "unknown");
-    return fail(req, 500, "SERVER", "Something went wrong.", extraHeaders);
+    const status = e instanceof ApiError ? e.status : 500;
+    const code = e instanceof ApiError ? e.code : "SERVER";
+    const message = e instanceof ApiError ? e.message : "Something went wrong.";
+    const classification =
+      e instanceof ApiError
+        ? e.code.startsWith("FINGERPRINT")
+          ? "fingerprint_error"
+          : e.status >= 500
+            ? "server_error"
+            : "client_error"
+        : "internal_error";
+
+    // Safe structured server-side diagnostic log (never exposes secrets, passwords, visitor IDs, or HMACs)
+    console.error(
+      `[api-error] ${JSON.stringify({
+        route,
+        kind,
+        stage: kind === "vote" ? "vote_submission" : "read_operation",
+        classification,
+        status,
+        code,
+        message: e instanceof Error ? e.message : "unknown",
+        correlationId,
+      })}`,
+    );
+
+    return fail(req, status, code, message, extraHeaders);
   }
 }
 
