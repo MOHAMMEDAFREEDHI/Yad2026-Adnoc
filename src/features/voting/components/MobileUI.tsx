@@ -106,17 +106,21 @@ export function ChooseTopBar({ onBack }: { onBack: () => void }) {
     <div className="choose-header">
       <button
         type="button"
-        className="glass-back !size-[calc(42*var(--k))] !rounded-[calc(14*var(--k))] mt-[calc(19*var(--k))]"
+        className="glass-back !size-[clamp(34px,calc(42*var(--k)),42px)] !rounded-[clamp(10px,calc(14*var(--k)),14px)]"
         onClick={onBack}
         aria-label="Back"
       >
-        <ArrowLeft size={22} strokeWidth={2} className="!size-[calc(22*var(--k))]" />
+        <ArrowLeft
+          size={22}
+          strokeWidth={2}
+          className="!size-[clamp(18px,calc(22*var(--k)),22px)]"
+        />
       </button>
       <img
         src={adnocVerticalCardUrl}
         alt="ADNOC"
         draggable={false}
-        className="h-[calc(75*var(--k))] w-[calc(49.7*var(--k))] object-contain select-none"
+        className="h-[clamp(48px,calc(75*var(--k)),75px)] w-[clamp(32px,calc(49.7*var(--k)),49.7px)] object-contain select-none"
       />
     </div>
   );
@@ -124,11 +128,20 @@ export function ChooseTopBar({ onBack }: { onBack: () => void }) {
 
 export function TopBar({ onBack }: { onBack: () => void }) {
   return (
-    <div className="flex items-start justify-between">
-      <button type="button" className="glass-back" onClick={onBack} aria-label="Back">
-        <ArrowLeft size={22} strokeWidth={2} />
+    <div className="flex items-center justify-between flex-none h-[clamp(38px,calc(55*var(--k)),55px)]">
+      <button
+        type="button"
+        className="glass-back !size-[clamp(34px,calc(42*var(--k)),42px)] !rounded-[clamp(10px,calc(14*var(--k)),14px)]"
+        onClick={onBack}
+        aria-label="Back"
+      >
+        <ArrowLeft
+          size={22}
+          strokeWidth={2}
+          className="!size-[clamp(18px,calc(22*var(--k)),22px)]"
+        />
       </button>
-      <AdnocLogo className="h-[55px] w-[111px] object-contain -mt-[7px] -mr-[5px]" />
+      <AdnocLogo className="h-[clamp(36px,calc(55*var(--k)),55px)] w-[clamp(72px,calc(111*var(--k)),111px)] object-contain -mr-[5px]" />
     </div>
   );
 }
@@ -145,7 +158,7 @@ export function ProgressRow({
   const p = percent ?? 0;
   return (
     <div
-      className={`flex items-center ${scaled ? "gap-[calc(9.55*var(--k))]" : "gap-[9.55px]"} ${className}`}
+      className={`flex items-center ${scaled ? "gap-[clamp(6px,calc(9.55*var(--k)),9.55px)]" : "gap-[9.55px]"} ${className}`}
     >
       <div className="progress-track flex-1" role="presentation">
         <div className="progress-fill" style={{ width: `${p}%` }} />
@@ -153,7 +166,7 @@ export function ProgressRow({
       <span
         className={`font-card font-bold flex-none text-right ${
           scaled
-            ? "text-[calc(10.74*var(--k))] leading-[calc(12*var(--k))] w-[calc(23.87*var(--k))]"
+            ? "text-[clamp(9px,calc(10.74*var(--k)),10.74px)] leading-[clamp(10px,calc(12*var(--k)),12px)] w-[clamp(18px,calc(23.87*var(--k)),23.87px)]"
             : "text-[10.7419px] leading-[12px] w-[23.87px]"
         }`}
       >
@@ -190,15 +203,19 @@ export function OptionCard({
         size={20.81}
         strokeWidth={1.5}
         aria-hidden
-        className="flex-none !size-[calc(20.81*var(--k))]"
+        className="flex-none !size-[clamp(16px,calc(20.81*var(--k)),20.81px)]"
       />
-      <span className="mt-[calc(8.6*var(--k))] font-brand text-[calc(13.13*var(--k))] font-bold leading-[calc(15*var(--k))]">
+      <span className="mt-[clamp(4px,calc(8.6*var(--k)),8.6px)] font-brand text-[clamp(10.5px,calc(13.13*var(--k)),13.13px)] font-bold leading-[clamp(12px,calc(15*var(--k)),15px)] line-clamp-1">
         {option.label}
       </span>
-      <span className="mt-[calc(3.18*var(--k))] font-brand text-[calc(11.54*var(--k))] font-normal leading-[calc(14*var(--k))] text-subtle">
+      <span className="mt-[clamp(2px,calc(3.18*var(--k)),3.18px)] font-brand text-[clamp(9px,calc(11.54*var(--k)),11.54px)] font-normal leading-[clamp(11px,calc(14*var(--k)),14px)] text-subtle line-clamp-2">
         {option.description}
       </span>
-      <ProgressRow percent={percent} scaled className="mt-auto pt-[calc(5*var(--k))]" />
+      <ProgressRow
+        percent={percent}
+        scaled
+        className="mt-auto pt-[clamp(3px,calc(5*var(--k)),5px)]"
+      />
     </button>
   );
 }
@@ -212,23 +229,36 @@ export function SelectedSummary({
 }) {
   const Icon = OPTION_VISUALS[option.key]?.icon ?? OPTION_VISUALS["business-owner"].icon;
   return (
-    <div className="option-card !min-h-0 !px-[17px] !pt-[18px] !pb-[16px] mx-[13px] font-summary">
-      <div className="flex items-start gap-[18px]">
-        <Icon size={22} strokeWidth={1.5} className="mt-[10px] flex-none" aria-hidden />
-        <div className="flex-1">
-          <div className="text-[15px] font-bold leading-[22px]">{option.label}</div>
-          <div className="text-[11.5px] leading-[17px] text-[#CFE0FF] mt-[2px]">
+    <div className="option-card !min-h-0 !px-[clamp(10px,calc(17*var(--k)),17px)] !pt-[clamp(10px,calc(16*var(--k)),18px)] !pb-[clamp(10px,calc(14*var(--k)),16px)] mx-[clamp(4px,calc(13*var(--k)),13px)] font-summary">
+      <div className="flex items-start gap-[clamp(8px,calc(16*var(--k)),18px)]">
+        <Icon
+          size={22}
+          strokeWidth={1.5}
+          className="mt-[clamp(2px,calc(6*var(--k)),10px)] flex-none !size-[clamp(18px,calc(22*var(--k)),22px)]"
+          aria-hidden
+        />
+        <div className="flex-1 min-w-0">
+          <div className="text-[clamp(13px,calc(15*var(--k)),15px)] font-bold leading-[clamp(18px,calc(22*var(--k)),22px)] truncate">
+            {option.label}
+          </div>
+          <div className="text-[clamp(10px,calc(11.5*var(--k)),11.5px)] leading-[clamp(14px,calc(17*var(--k)),17px)] text-[#CFE0FF] mt-[2px] line-clamp-2">
             {option.description}
           </div>
         </div>
-        <div className="flex items-center gap-[8px] mt-[6px]">
-          <span className="grid place-items-center size-[14px] rounded-full bg-white/25 text-white">
-            <Check size={10} strokeWidth={3} />
+        <div className="flex items-center gap-[clamp(4px,calc(8*var(--k)),8px)] mt-[clamp(2px,calc(6*var(--k)),6px)] flex-none">
+          <span className="grid place-items-center size-[clamp(12px,calc(14*var(--k)),14px)] rounded-full bg-white/25 text-white">
+            <Check
+              size={10}
+              strokeWidth={3}
+              className="!size-[clamp(8px,calc(10*var(--k)),10px)]"
+            />
           </span>
-          <span className="text-[11px] font-bold leading-[16px]">Done</span>
+          <span className="text-[clamp(9.5px,calc(11*var(--k)),11px)] font-bold leading-[16px]">
+            Done
+          </span>
         </div>
       </div>
-      <ProgressRow percent={percent} className="mt-[22px]" />
+      <ProgressRow percent={percent} className="mt-[clamp(10px,calc(20*var(--k)),22px)]" />
     </div>
   );
 }

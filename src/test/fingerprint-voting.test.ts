@@ -63,7 +63,7 @@ function fakeDb(s: State): Db {
         id: `ep-${s.participations.length + 1}`,
         eventId: p[0] as string,
         visitorIdHash: p[1] as string,
-        answerOptionId: p[2] as string | undefined,
+        ...(p[2] ? { answerOptionId: p[2] as string } : {}),
       };
       s.participations.push(ep);
       return { rows: [{ id: ep.id }] };

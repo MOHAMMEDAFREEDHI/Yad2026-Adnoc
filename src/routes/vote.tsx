@@ -407,18 +407,16 @@ function VotePage() {
         )}
 
         {step === "choose" && (
-          <>
+          <div className="choose-container">
             <ChooseTopBar onBack={() => setStep("welcome")} />
             <header className="choose-intro">
-              <p className="text-[calc(16*var(--k))] font-semibold leading-[calc(16*var(--k))]">
-                Tap your choice
-              </p>
-              <h1 className="mt-[calc(15*var(--k))] text-[calc(27*var(--k))] font-bold leading-[calc(34*var(--k))] uppercase">
+              <p className="choose-intro-tap">Tap your choice</p>
+              <h1 className="choose-intro-title">
                 Your future in
                 <br />
                 UAE industry
               </h1>
-              <p className="mt-[calc(16*var(--k))] text-[calc(16*var(--k))] font-semibold leading-[calc(20*var(--k))]">
+              <p className="choose-intro-sub">
                 Which one is <span className="text-cyan">YOU?</span>
               </p>
             </header>
@@ -466,7 +464,7 @@ function VotePage() {
 
             <div className="choose-footer">
               {submitError && (
-                <p role="alert" className="mb-3 text-center text-[14px] font-medium text-subtle">
+                <p role="alert" className="mb-2 text-center text-[13px] font-medium text-subtle">
                   {submitError}
                 </p>
               )}
@@ -478,43 +476,35 @@ function VotePage() {
                 {submitting ? "Submitting…" : "Proceed"}
               </PillButton>
             </div>
-          </>
+          </div>
         )}
 
         {step === "thanks" && accepted && (
-          <>
+          <div className="thanks-container">
             <TopBar onBack={goHome} />
-            <section className="mt-[64px] flex flex-col items-center text-center">
-              <div
-                className="relative h-[108px] w-[120px] overflow-hidden pointer-events-none select-none"
-                aria-hidden="true"
-              >
-                <img
-                  src={thankYouFrameUrl}
-                  alt=""
-                  draggable={false}
-                  className="absolute left-1/2 top-0 h-[499px] w-[345px] max-w-none -translate-x-1/2"
-                />
+            <section className="thanks-hero">
+              <div className="thanks-icon-box" aria-hidden="true">
+                <img src={thankYouFrameUrl} alt="" draggable={false} className="thanks-icon-img" />
               </div>
-              <h1 className="mt-[6px] glow-text text-[50px] font-bold leading-[1.15] uppercase">
+              <h1 className="thanks-title">
                 Thank
                 <br />
                 you!
               </h1>
-              <p className="text-[30px] font-normal leading-[1.2]">for taking part</p>
-              <hr className="mt-[22px] w-[163px] border-t border-subtle/60" />
-              <p className="mt-[18px] text-[13px] font-bold">Your choice has been submitted.</p>
-              <p className="mt-[4px] text-[13px] leading-[1.5] text-subtle max-w-[220px]">
+              <p className="thanks-subtitle">for taking part</p>
+              <hr className="thanks-hr" />
+              <p className="thanks-msg-bold">Your choice has been submitted.</p>
+              <p className="thanks-msg-subtle">
                 We'll use it to show where you fit in the UAE's industrial future.
               </p>
             </section>
-            <div className="mt-[40px]">
+            <div className="thanks-summary-wrap">
               <SelectedSummary option={accepted} percent={percentFor(accepted.id)} />
             </div>
-            <div className="mt-auto pt-6">
+            <div className="thanks-footer">
               <PillButton onClick={goHome}>Back to home</PillButton>
             </div>
-          </>
+          </div>
         )}
       </div>
     </main>
@@ -523,34 +513,23 @@ function VotePage() {
 
 function Welcome({ onStart }: { onStart: () => void }) {
   return (
-    <>
-      <section className="mt-[96px] flex flex-col items-center text-center">
-        <img
-          src={adnocVerticalCardUrl}
-          alt="ADNOC"
-          draggable={false}
-          className="h-[112px] w-[74px] object-contain select-none drop-shadow-[0_0_1px_rgba(255,255,255,0.4)]"
-        />
-        <h1 className="mt-[34px] flex flex-col items-center select-none">
-          <span className="font-brand text-[36.84px] font-bold leading-[47px] tracking-[-0.01em] text-white">
-            What's
-          </span>
-          <span className="welcome-your font-brand text-[95.34px] font-extrabold leading-[108px] tracking-[-0.02em] text-white">
-            YOUR
-          </span>
-          <span className="font-brand text-[36.84px] font-bold leading-[47px] tracking-[-0.01em] text-white">
-            dream job?
-          </span>
+    <div className="welcome-container">
+      <section className="welcome-content">
+        <img src={adnocVerticalCardUrl} alt="ADNOC" draggable={false} className="welcome-logo" />
+        <h1 className="welcome-heading">
+          <span className="welcome-whats">What's</span>
+          <span className="welcome-your-word">YOUR</span>
+          <span className="welcome-dream">dream job?</span>
         </h1>
-        <p className="mt-[24px] max-w-[260px] font-brand text-[13.61px] font-normal leading-[17px] text-white text-center">
+        <p className="welcome-desc">
           A few taps to find where you fit in the
           <br />
           UAE's industrial future.
         </p>
       </section>
-      <div className="mt-auto pt-6">
+      <div className="welcome-footer">
         <PillButton onClick={onStart}>Let's find out</PillButton>
       </div>
-    </>
+    </div>
   );
 }
