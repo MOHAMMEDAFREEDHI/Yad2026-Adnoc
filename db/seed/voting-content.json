@@ -6,11 +6,47 @@
     "subtitle": "Which one is YOU?"
   },
   "options": [
-    { "displayOrder": 1, "label": "Business owner", "description": "Start your own factory or company", "iconKey": "business-owner", "imageUrl": null },
-    { "displayOrder": 2, "label": "Industrial investor", "description": "Invest in new UAE factories", "iconKey": "industrial-investor", "imageUrl": null },
-    { "displayOrder": 3, "label": "Private-sector professional", "description": "Work in a UAE company that supplies ADNOC", "iconKey": "private-sector", "imageUrl": null },
-    { "displayOrder": 4, "label": "Industrial specialist", "description": "Engineer, technician or quality expert in a factory", "iconKey": "industrial-specialist", "imageUrl": null },
-    { "displayOrder": 5, "label": "Data & AI in industry", "description": "Smart factories, robots and automation", "iconKey": "data-ai", "imageUrl": null },
-    { "displayOrder": 6, "label": "Something else", "description": "Tell us your idea!", "iconKey": "something-else", "imageUrl": null }
+    {
+      "displayOrder": 1,
+      "label": "Business owner",
+      "description": "Start your own factory or company",
+      "iconKey": "business-owner",
+      "imageUrl": null
+    },
+    {
+      "displayOrder": 2,
+      "label": "Industrial investor",
+      "description": "Invest in new UAE factories",
+      "iconKey": "industrial-investor",
+      "imageUrl": null
+    },
+    {
+      "displayOrder": 3,
+      "label": "Private-sector professional",
+      "description": "Work in a UAE company that supplies ADNOC",
+      "iconKey": "private-sector",
+      "imageUrl": null
+    },
+    {
+      "displayOrder": 4,
+      "label": "Industrial specialist",
+      "description": "Engineer, technician or quality expert in a factory",
+      "iconKey": "industrial-specialist",
+      "imageUrl": null
+    },
+    {
+      "displayOrder": 5,
+      "label": "Data & AI in industry",
+      "description": "Smart factories, robots and automation",
+      "iconKey": "data-ai",
+      "imageUrl": null
+    },
+    {
+      "displayOrder": 6,
+      "label": "Something else",
+      "description": "Tell us your idea!",
+      "iconKey": "something-else",
+      "imageUrl": null
+    }
   ]
 }

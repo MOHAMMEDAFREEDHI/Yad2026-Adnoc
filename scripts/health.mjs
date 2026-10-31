@@ -18,7 +18,9 @@ const ssl =
     ? false
     : {
         rejectUnauthorized: (process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "true") !== "false",
-        ...(process.env.DB_SSL_CA_PATH ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH, "utf8") } : {}),
+        ...(process.env.DB_SSL_CA_PATH
+          ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH, "utf8") }
+          : {}),
       };
 
 const c = new pg.Client({
@@ -27,7 +29,7 @@ const c = new pg.Client({
   connectionTimeoutMillis: 5000,
 });
 
-const EXPECTED_TABLES = ["events", "questions", "answer_options", "votes"];
+const EXPECTED_TABLES = ["events", "questions", "answer_options", "votes", "event_participations"];
 
 try {
   await c.connect();

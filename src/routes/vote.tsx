@@ -1,3 +1,4 @@
+import { useVisitorData } from "@fingerprint/react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -16,16 +17,31 @@ import {
   SelectedSummary,
   TopBar,
 } from "@/features/voting/components/MobileUI";
-import { getVotingService, newIdempotencyKey, VOTE_ERROR_MESSAGES } from "@/features/voting/service";
-import { VoteError, type AnswerOption, type Question, type ResultsSnapshot } from "@/features/voting/types";
+import {
+  getVotingService,
+  newIdempotencyKey,
+  VOTE_ERROR_MESSAGES,
+} from "@/features/voting/service";
+import {
+  VoteError,
+  type AnswerOption,
+  type Question,
+  type ResultsSnapshot,
+} from "@/features/voting/types";
 
 export const Route = createFileRoute("/vote")({
   head: () => ({
     meta: [
       { title: "What's YOUR dream job? — ADNOC at ADIPEC 2026" },
-      { name: "description", content: "A few taps to find where you fit in the UAE's industrial future." },
+      {
+        name: "description",
+        content: "A few taps to find where you fit in the UAE's industrial future.",
+      },
       { property: "og:title", content: "What's YOUR dream job? — ADNOC at ADIPEC 2026" },
-      { property: "og:description", content: "A few taps to find where you fit in the UAE's industrial future." },
+      {
+        property: "og:description",
+        content: "A few taps to find where you fit in the UAE's industrial future.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -39,6 +55,15 @@ export const QUESTION_RETRY_DELAYS_MS = [5_000, 10_000, 20_000, 30_000] as const
 
 function VotePage() {
   const service = getVotingService();
+  const {
+    data: visitorData,
+    error: fpError,
+    getData: getVisitorData,
+  } = useVisitorData({ immediate: true });
+
+  const visitorDataRef = useRef(visitorData);
+  visitorDataRef.current = visitorData;
+
   const [step, setStep] = useState<Step>("welcome");
   const [question, setQuestion] = useState<Question | null>(null);
   const [loadingQuestion, setLoadingQuestion] = useState(true);
@@ -65,7 +90,7 @@ function VotePage() {
   }, []);
 
   const loadQuestion = useCallback(
-    (opts?: { manual?: boolean; resetBackoff?: boolean }) => {
+    (opts?: { manual?: boolean; resetBackoff?: boolean; eventId?: string }) => {
       if (questionRef.current) {
         clearRetryTimer();
         return;
@@ -89,8 +114,10 @@ function VotePage() {
       const ctrl = new AbortController();
       questionInFlightRef.current = ctrl;
 
+      const activeEventId = opts?.eventId ?? visitorDataRef.current?.event_id;
+
       service
-        .getActiveQuestion(ctrl.signal)
+        .getActiveQuestion({ signal: ctrl.signal, eventId: activeEventId })
         .then((q) => {
           if (!mountedRef.current || questionInFlightRef.current !== ctrl) return;
           questionInFlightRef.current = null;
@@ -98,11 +125,15 @@ function VotePage() {
           retryAttemptRef.current = 0;
           questionRef.current = q;
           setQuestion(q);
+          if (q.hasVoted) {
+            setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+          }
           setLoadError(null);
           setLoadingQuestion(false);
         })
         .catch((err: unknown) => {
-          if (!mountedRef.current || ctrl.signal.aborted || questionInFlightRef.current !== ctrl) return;
+          if (!mountedRef.current || ctrl.signal.aborted || questionInFlightRef.current !== ctrl)
+            return;
           questionInFlightRef.current = null;
           setLoadingQuestion(false);
 
@@ -114,7 +145,10 @@ function VotePage() {
                 : "SERVER";
           setLoadError(VOTE_ERROR_MESSAGES[code]);
 
-          const attemptIndex = Math.min(retryAttemptRef.current, QUESTION_RETRY_DELAYS_MS.length - 1);
+          const attemptIndex = Math.min(
+            retryAttemptRef.current,
+            QUESTION_RETRY_DELAYS_MS.length - 1,
+          );
           const delayMs = QUESTION_RETRY_DELAYS_MS[attemptIndex]!;
           retryAttemptRef.current += 1;
 
@@ -128,6 +162,24 @@ function VotePage() {
     },
     [service, clearRetryTimer],
   );
+
+  // Background check: when Fingerprint identification completes, detect if visitor has already voted
+  useEffect(() => {
+    const eventId = visitorData?.event_id;
+    if (!eventId || !question || question.hasVoted || service.isSimulated) return;
+
+    service
+      .getActiveQuestion({ eventId })
+      .then((q) => {
+        if (q.hasVoted) {
+          const updated = { ...q, hasVoted: true };
+          questionRef.current = updated;
+          setQuestion(updated);
+          setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+        }
+      })
+      .catch(() => {});
+  }, [visitorData?.event_id, question, service]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -162,7 +214,10 @@ function VotePage() {
   useEffect(() => {
     if (!question) return;
     const ctrl = new AbortController();
-    service.getResults(question.id, ctrl.signal).then(setResults).catch(() => {});
+    service
+      .getResults(question.id, ctrl.signal)
+      .then(setResults)
+      .catch(() => {});
     const unsub = service.subscribeResults(question.id, setResults);
     return () => {
       ctrl.abort();
@@ -170,29 +225,79 @@ function VotePage() {
     };
   }, [question, service]);
 
-  const percentFor = (id: string) => results?.results.find((r) => r.optionId === id)?.percent ?? null;
+  const percentFor = (id: string) =>
+    results?.results.find((r) => r.optionId === id)?.percent ?? null;
 
   async function submit() {
     if (!question || !selectedId || inFlight.current) return;
+    if (question.hasVoted) {
+      setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+      return;
+    }
     inFlight.current = true;
     setSubmitting(true);
     setSubmitError(null);
+
+    let eventId = visitorData?.event_id;
+    if (!eventId && !fpError) {
+      try {
+        const fresh = await getVisitorData();
+        eventId = fresh?.event_id;
+      } catch {
+        // Handled below if eventId remains empty
+      }
+    }
+
+    if (!eventId && !service.isSimulated) {
+      inFlight.current = false;
+      setSubmitting(false);
+      setSubmitError(
+        "Device verification is temporarily unavailable. Please check your connection and try again.",
+      );
+      return;
+    }
+
     // Reuse the same key while the visitor retries the same option, so retries can't double count.
-    if (keyRef.current?.optionId !== selectedId) keyRef.current = { optionId: selectedId, key: newIdempotencyKey() };
+    if (keyRef.current?.optionId !== selectedId)
+      keyRef.current = { optionId: selectedId, key: newIdempotencyKey() };
     const ctrl = new AbortController();
     const timer = setTimeout(() => ctrl.abort(), SUBMIT_TIMEOUT_MS);
     try {
       const res = await service.submitVote(
-        { questionId: question.id, optionId: selectedId, idempotencyKey: keyRef.current.key },
+        {
+          questionId: question.id,
+          optionId: selectedId,
+          idempotencyKey: keyRef.current.key,
+          fingerprintEventId: eventId,
+        },
         ctrl.signal,
       );
       const opt = question.options.find((o) => o.id === res.optionId) ?? null;
       setAccepted(opt);
-      service.getResults(question.id).then(setResults).catch(() => {});
+      if (!service.isSimulated) {
+        const updatedQuestion = { ...question, hasVoted: true };
+        questionRef.current = updatedQuestion;
+        setQuestion(updatedQuestion);
+        setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+      }
+      service
+        .getResults(question.id)
+        .then(setResults)
+        .catch(() => {});
       keyRef.current = null;
       setStep("thanks");
     } catch (e) {
-      const code = e instanceof VoteError ? e.code : typeof navigator !== "undefined" && !navigator.onLine ? "NETWORK" : "SERVER";
+      if (e instanceof VoteError && e.code === "ALREADY_VOTED") {
+        const updatedQuestion = { ...question, hasVoted: true };
+        questionRef.current = updatedQuestion;
+        setQuestion(updatedQuestion);
+      }
+      const code =
+        e instanceof VoteError
+          ? e.code
+          : typeof navigator !== "undefined" && !navigator.onLine
+            ? "NETWORK"
+            : "SERVER";
       setSubmitError(VOTE_ERROR_MESSAGES[code]);
     } finally {
       clearTimeout(timer);
@@ -204,12 +309,20 @@ function VotePage() {
   function goHome() {
     setSelectedId(null);
     setAccepted(null);
-    setSubmitError(null);
+    if (!question?.hasVoted) {
+      setSubmitError(null);
+    }
     setStep("welcome");
   }
 
-  const topOverlaySrc = step === "choose" ? votingTopOverlayUrl : step === "thanks" ? thankYouTopOverlayUrl : null;
-  const bottomOverlaySrc = step === "choose" ? votingBottomOverlayUrl : step === "thanks" ? thankYouBottomOverlayUrl : null;
+  const topOverlaySrc =
+    step === "choose" ? votingTopOverlayUrl : step === "thanks" ? thankYouTopOverlayUrl : null;
+  const bottomOverlaySrc =
+    step === "choose"
+      ? votingBottomOverlayUrl
+      : step === "thanks"
+        ? thankYouBottomOverlayUrl
+        : null;
 
   return (
     <main className="mobile-stage">
@@ -237,7 +350,14 @@ function VotePage() {
           <Welcome
             onStart={() => {
               setStep("choose");
-              if (!questionRef.current && !questionInFlightRef.current && retryTimerRef.current === null) {
+              if (questionRef.current?.hasVoted) {
+                setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+              }
+              if (
+                !questionRef.current &&
+                !questionInFlightRef.current &&
+                retryTimerRef.current === null
+              ) {
                 loadQuestion({ resetBackoff: true });
               }
             }}
@@ -248,7 +368,9 @@ function VotePage() {
           <>
             <ChooseTopBar onBack={() => setStep("welcome")} />
             <header className="choose-intro">
-              <p className="text-[calc(16*var(--k))] font-semibold leading-[calc(16*var(--k))]">Tap your choice</p>
+              <p className="text-[calc(16*var(--k))] font-semibold leading-[calc(16*var(--k))]">
+                Tap your choice
+              </p>
               <h1 className="mt-[calc(15*var(--k))] text-[calc(27*var(--k))] font-bold leading-[calc(34*var(--k))] uppercase">
                 Your future in
                 <br />
@@ -270,7 +392,9 @@ function VotePage() {
                     disabled={submitting}
                     onSelect={() => {
                       setSelectedId(o.id);
-                      setSubmitError(null);
+                      if (!question.hasVoted) {
+                        setSubmitError(null);
+                      }
                     }}
                   />
                 ))}
@@ -283,13 +407,19 @@ function VotePage() {
                     Checking again…
                   </p>
                 ) : (
-                  <button type="button" className="mt-3 underline" onClick={() => loadQuestion({ manual: true })}>
+                  <button
+                    type="button"
+                    className="mt-3 underline"
+                    onClick={() => loadQuestion({ manual: true })}
+                  >
                     Try again
                   </button>
                 )}
               </div>
             ) : (
-              <p className="mt-10 text-center text-subtle" aria-live="polite">Loading…</p>
+              <p className="mt-10 text-center text-subtle" aria-live="polite">
+                Loading…
+              </p>
             )}
 
             <div className="choose-footer">
@@ -298,7 +428,11 @@ function VotePage() {
                   {submitError}
                 </p>
               )}
-              <PillButton disabled={!selectedId || submitting || !question} onClick={submit} aria-busy={submitting}>
+              <PillButton
+                disabled={!selectedId || submitting || !question || Boolean(question.hasVoted)}
+                onClick={submit}
+                aria-busy={submitting}
+              >
                 {submitting ? "Submitting…" : "Proceed"}
               </PillButton>
             </div>

@@ -28,7 +28,9 @@ d("/vote frontend connected to real HTTP API + AWS RDS", () => {
 
     const beforeResults = await httpSvc.getResults("cea3cba2-3ae7-4356-ac38-505ea75c0dd3");
     const beforeTotal = beforeResults.totalVotes;
-    const beforeOpt5 = beforeResults.results.find((r) => r.optionId === "9fa1b192-a290-4dd4-bdf7-c010ff1a591e")!.count;
+    const beforeOpt5 = beforeResults.results.find(
+      (r) => r.optionId === "9fa1b192-a290-4dd4-bdf7-c010ff1a591e",
+    )!.count;
 
     // 1. Open /vote
     const { unmount } = render(<VotePage />);
@@ -56,7 +58,9 @@ d("/vote frontend connected to real HTTP API + AWS RDS", () => {
     // 7. Retrieve updated results from the backend and confirm persistence in AWS RDS
     const afterResults = await httpSvc.getResults("cea3cba2-3ae7-4356-ac38-505ea75c0dd3");
     expect(afterResults.totalVotes).toBe(beforeTotal + 1);
-    const afterOpt5 = afterResults.results.find((r) => r.optionId === "9fa1b192-a290-4dd4-bdf7-c010ff1a591e")!;
+    const afterOpt5 = afterResults.results.find(
+      (r) => r.optionId === "9fa1b192-a290-4dd4-bdf7-c010ff1a591e",
+    )!;
     expect(afterOpt5.count).toBe(beforeOpt5 + 1);
     await waitFor(() => {
       expect(screen.getByText(`${afterOpt5.percent}%`)).toBeTruthy();
@@ -73,4 +77,3 @@ d("/vote frontend connected to real HTTP API + AWS RDS", () => {
     });
   });
 });
-

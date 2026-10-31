@@ -6,13 +6,18 @@ import { VoteError } from "./types";
 
 describe("computeResults", () => {
   it("reproduces the design sample: 248 responses → 26/22/16/14/12/10", () => {
-    const r = computeResults([64, 55, 40, 35, 30, 24].map((count, i) => ({ optionId: `o${i}`, count })));
+    const r = computeResults(
+      [64, 55, 40, 35, 30, 24].map((count, i) => ({ optionId: `o${i}`, count })),
+    );
     expect(r.totalVotes).toBe(248);
     expect(r.results.map((x) => x.percent)).toEqual([26, 22, 16, 14, 12, 10]);
   });
 
   it("shows 0% everywhere with zero votes", () => {
-    const r = computeResults([{ optionId: "a", count: 0 }, { optionId: "b", count: 0 }]);
+    const r = computeResults([
+      { optionId: "a", count: 0 },
+      { optionId: "b", count: 0 },
+    ]);
     expect(r.results.map((x) => x.percent)).toEqual([0, 0]);
   });
 

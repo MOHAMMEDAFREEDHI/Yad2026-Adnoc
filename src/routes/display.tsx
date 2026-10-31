@@ -15,9 +15,15 @@ export const Route = createFileRoute("/display")({
   head: () => ({
     meta: [
       { title: "Live results — Your future in UAE industry" },
-      { name: "description", content: "Live ADIPEC 2026 voting results for the portrait LED screen." },
+      {
+        name: "description",
+        content: "Live ADIPEC 2026 voting results for the portrait LED screen.",
+      },
       { property: "og:title", content: "Live results — Your future in UAE industry" },
-      { property: "og:description", content: "Live ADIPEC 2026 voting results for the portrait LED screen." },
+      {
+        property: "og:description",
+        content: "Live ADIPEC 2026 voting results for the portrait LED screen.",
+      },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
@@ -116,7 +122,12 @@ function DisplayBackgroundVideo() {
 }
 
 function renderDisplayIcon(key: OptionKey) {
-  const commonProps = { size: 90, strokeWidth: 1.75, className: "text-white", "aria-hidden": true as const };
+  const commonProps = {
+    size: 90,
+    strokeWidth: 1.75,
+    className: "text-white",
+    "aria-hidden": true as const,
+  };
   if (key === "business-owner") return <Rocket {...commonProps} />;
   if (key === "industrial-investor") return <Factory {...commonProps} />;
   if (key === "private-sector") return <Building2 {...commonProps} />;
@@ -247,10 +258,7 @@ function DisplayPage() {
     >
       <DisplayBackgroundVideo />
 
-      <div
-        className="led-stage"
-        style={{ transform: `translate(-50%, -50%) scale(${scale})` }}
-      >
+      <div className="led-stage" style={{ transform: `translate(-50%, -50%) scale(${scale})` }}>
         {/* Upper-right vertical ADNOC badge (Asset 2 1.png) */}
         <img
           src={displayLogoUrl}

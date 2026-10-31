@@ -1,6 +1,6 @@
 # Blueprint Pixel Garden
 
-@connector:github:"GitHub API" here i ahve atthed the promt  + img ui of each page and  also each page css all layers code also  ahve atthed ok  so work like as per the protm okay and  i ahve each assests shown in the images but i ahve not space to atth in this chat so if youneeded i wills ahre in next chat
+@connector:github:"GitHub API" here i ahve atthed the promt + img ui of each page and also each page css all layers code also ahve atthed ok so work like as per the protm okay and i ahve each assests shown in the images but i ahve not space to atth in this chat so if youneeded i wills ahre in next chat
 
 This project was built with [Lovable](https://lovable.dev).
 

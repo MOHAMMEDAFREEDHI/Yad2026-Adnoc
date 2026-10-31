@@ -23,18 +23,59 @@ export const MOCK_QUESTION: Question = {
   prompt: "Which one is YOU?",
   status: "active",
   options: [
-    { id: "opt-1", key: "business-owner", label: "Business owner", description: "Start your own factory or company", sortOrder: 1 },
-    { id: "opt-2", key: "industrial-investor", label: "Industrial investor", description: "Invest in new UAE factories", sortOrder: 2 },
-    { id: "opt-3", key: "private-sector", label: "Private-sector professional", description: "Work in a UAE company that supplies ADNOC", sortOrder: 3 },
-    { id: "opt-4", key: "industrial-specialist", label: "Industrial specialist", description: "Engineer, technician or quality expert in a factory", sortOrder: 4 },
-    { id: "opt-5", key: "data-ai", label: "Data & AI in industry", description: "Smart factories, robots and automation", sortOrder: 5 },
-    { id: "opt-6", key: "something-else", label: "Something else", description: "Tell us your idea!", sortOrder: 6 },
+    {
+      id: "opt-1",
+      key: "business-owner",
+      label: "Business owner",
+      description: "Start your own factory or company",
+      sortOrder: 1,
+    },
+    {
+      id: "opt-2",
+      key: "industrial-investor",
+      label: "Industrial investor",
+      description: "Invest in new UAE factories",
+      sortOrder: 2,
+    },
+    {
+      id: "opt-3",
+      key: "private-sector",
+      label: "Private-sector professional",
+      description: "Work in a UAE company that supplies ADNOC",
+      sortOrder: 3,
+    },
+    {
+      id: "opt-4",
+      key: "industrial-specialist",
+      label: "Industrial specialist",
+      description: "Engineer, technician or quality expert in a factory",
+      sortOrder: 4,
+    },
+    {
+      id: "opt-5",
+      key: "data-ai",
+      label: "Data & AI in industry",
+      description: "Smart factories, robots and automation",
+      sortOrder: 5,
+    },
+    {
+      id: "opt-6",
+      key: "something-else",
+      label: "Something else",
+      description: "Tell us your idea!",
+      sortOrder: 6,
+    },
   ],
 };
 
 /** Design-reference sample (248 responses → 26/22/16/14/12/10%). Mock only. */
 const SEED_COUNTS: Record<string, number> = {
-  "opt-1": 64, "opt-2": 55, "opt-3": 40, "opt-4": 35, "opt-5": 30, "opt-6": 24,
+  "opt-1": 64,
+  "opt-2": 55,
+  "opt-3": 40,
+  "opt-4": 35,
+  "opt-5": 30,
+  "opt-6": 24,
 };
 
 const STORAGE_KEY = "adipec-vote-mock-v1";
@@ -88,7 +129,10 @@ export class MockVotingService implements VotingService {
     return { questionId, totalVotes, results, generatedAt: new Date().toISOString() };
   }
 
-  async getActiveQuestion(_signal?: AbortSignal) {
+  async getActiveQuestion(
+    _opts?: AbortSignal | { signal?: AbortSignal; eventId?: string },
+    _maybeEventId?: string,
+  ) {
     // Immediate return of the active mock question to avoid timing/abort race conditions.
     return Promise.resolve(MOCK_QUESTION);
   }
@@ -97,7 +141,8 @@ export class MockVotingService implements VotingService {
     await delay(this.opts.latencyMs ?? 700, signal);
     if (input.questionId !== MOCK_QUESTION.id) throw new VoteError("QUESTION_UNAVAILABLE");
     if (MOCK_QUESTION.status !== "active") throw new VoteError("POLL_CLOSED");
-    if (!MOCK_QUESTION.options.some((o) => o.id === input.optionId)) throw new VoteError("INVALID_OPTION");
+    if (!MOCK_QUESTION.options.some((o) => o.id === input.optionId))
+      throw new VoteError("INVALID_OPTION");
 
     const s = this.read();
     const existing = s.keys[input.idempotencyKey];

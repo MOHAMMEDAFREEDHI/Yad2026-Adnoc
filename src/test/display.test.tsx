@@ -141,19 +141,30 @@ describe("/display portrait LED results screen", () => {
     [1080, 1920, "scale(0.5)"],
     [1440, 2560, "scale(0.6666666666666666)"],
     [1920, 1080, "scale(0.28125)"],
-  ])("scales the 2160x3840 portrait stage accurately without overflow at %ix%i", (width, height, expectedScale) => {
-    Object.defineProperty(window, "innerWidth", { writable: true, configurable: true, value: width });
-    Object.defineProperty(window, "innerHeight", { writable: true, configurable: true, value: height });
-    const mock = new MockVotingService({ latencyMs: 0, seed: false });
-    _setVotingServiceForTests(mock);
+  ])(
+    "scales the 2160x3840 portrait stage accurately without overflow at %ix%i",
+    (width, height, expectedScale) => {
+      Object.defineProperty(window, "innerWidth", {
+        writable: true,
+        configurable: true,
+        value: width,
+      });
+      Object.defineProperty(window, "innerHeight", {
+        writable: true,
+        configurable: true,
+        value: height,
+      });
+      const mock = new MockVotingService({ latencyMs: 0, seed: false });
+      _setVotingServiceForTests(mock);
 
-    const { container } = render(<DisplayPage />);
-    act(() => {
-      window.dispatchEvent(new Event("resize"));
-    });
+      const { container } = render(<DisplayPage />);
+      act(() => {
+        window.dispatchEvent(new Event("resize"));
+      });
 
-    const stage = container.querySelector(".led-stage") as HTMLElement;
-    expect(stage).toBeTruthy();
-    expect(stage.style.transform).toContain(expectedScale);
-  });
+      const stage = container.querySelector(".led-stage") as HTMLElement;
+      expect(stage).toBeTruthy();
+      expect(stage.style.transform).toContain(expectedScale);
+    },
+  );
 });

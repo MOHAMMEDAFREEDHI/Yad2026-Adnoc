@@ -1,5 +1,6 @@
 import {
   VoteError,
+  type ActiveQuestionOptions,
   type OptionKey,
   type Question,
   type ResultsSnapshot,
@@ -24,6 +25,7 @@ const STATUS_TO_CODE: Record<number, VoteErrorCode> = {
 const API_ERROR_CODE_MAP: Record<string, VoteErrorCode> = {
   QUESTION_UNAVAILABLE: "QUESTION_UNAVAILABLE",
   DUPLICATE_VOTE: "DUPLICATE_VOTE",
+  ALREADY_VOTED: "ALREADY_VOTED",
   IDEMPOTENCY_CONFLICT: "DUPLICATE_VOTE",
   POLL_CLOSED: "POLL_CLOSED",
   INVALID_OPTION: "INVALID_OPTION",
@@ -41,7 +43,14 @@ interface ApiErrorBody {
 interface ApiActiveQuestion {
   event: { id: string };
   question: { id: string; prompt: string; subtitle: string | null };
-  options: { id: string; label: string; description: string | null; iconKey: string | null; displayOrder: number }[];
+  options: {
+    id: string;
+    label: string;
+    description: string | null;
+    iconKey: string | null;
+    displayOrder: number;
+  }[];
+  hasVoted?: boolean;
 }
 interface ApiResults {
   questionId: string;
@@ -54,7 +63,10 @@ export class HttpVotingService implements VotingService {
   readonly isSimulated = false;
   private base: string;
 
-  constructor(baseUrl: string, private fetchImpl: typeof fetch = (...a) => fetch(...a)) {
+  constructor(
+    baseUrl: string,
+    private fetchImpl: typeof fetch = (...a) => fetch(...a),
+  ) {
     this.base = baseUrl.replace(/\/+$/, "");
   }
 
@@ -63,9 +75,14 @@ export class HttpVotingService implements VotingService {
     try {
       res = await this.fetchImpl(`${this.base}${path}`, {
         cache: "no-store",
+        credentials: "include",
         ...init,
         signal: signal ?? null,
-        headers: { Accept: "application/json", ...(init?.body ? { "Content-Type": "application/json" } : {}) },
+        headers: {
+          Accept: "application/json",
+          ...(init?.body ? { "Content-Type": "application/json" } : {}),
+          ...init?.headers,
+        },
       });
     } catch (e) {
       if (signal?.aborted) throw new VoteError("TIMEOUT");
@@ -89,14 +106,35 @@ export class HttpVotingService implements VotingService {
     }
   }
 
-  async getActiveQuestion(signal?: AbortSignal): Promise<Question> {
-    const r = await this.request<ApiActiveQuestion>("/api/questions/active", undefined, signal);
+  async getActiveQuestion(
+    opts?: AbortSignal | ActiveQuestionOptions,
+    maybeEventId?: string,
+  ): Promise<Question> {
+    let signal: AbortSignal | undefined;
+    let eventId: string | undefined;
+
+    if (opts instanceof AbortSignal) {
+      signal = opts;
+      eventId = maybeEventId;
+    } else if (opts && typeof opts === "object") {
+      signal = opts.signal;
+      eventId = opts.eventId ?? maybeEventId;
+    }
+
+    const query = eventId ? `?eventId=${encodeURIComponent(eventId)}` : "";
+    const headers: Record<string, string> = eventId ? { "x-fingerprint-event-id": eventId } : {};
+    const r = await this.request<ApiActiveQuestion>(
+      `/api/questions/active${query}`,
+      { headers },
+      signal,
+    );
     return {
       id: r.question.id,
       eventId: r.event.id,
       title: r.question.prompt,
       prompt: r.question.subtitle ?? "",
       status: "active", // the API only returns a question when it is open for voting
+      hasVoted: Boolean(r.hasVoted),
       options: r.options.map((o) => ({
         id: o.id,
         key: (o.iconKey ?? "") as OptionKey,
@@ -108,27 +146,50 @@ export class HttpVotingService implements VotingService {
   }
 
   async submitVote(input: VoteSubmission, signal?: AbortSignal): Promise<VoteAccepted> {
-    const r = await this.request<{ voteId: string; questionId: string; answerOptionId: string; acceptedAt: string }>(
+    const headers: Record<string, string> = input.fingerprintEventId
+      ? { "x-fingerprint-event-id": input.fingerprintEventId }
+      : {};
+    const r = await this.request<{
+      voteId: string;
+      questionId: string;
+      answerOptionId: string;
+      acceptedAt: string;
+    }>(
       "/api/votes",
       {
         method: "POST",
+        headers,
         body: JSON.stringify({
           questionId: input.questionId,
           answerOptionId: input.optionId,
           idempotencyKey: input.idempotencyKey,
+          ...(input.fingerprintEventId ? { fingerprintEventId: input.fingerprintEventId } : {}),
         }),
       },
       signal,
     );
-    return { voteId: r.voteId, questionId: r.questionId, optionId: r.answerOptionId, acceptedAt: r.acceptedAt };
+    return {
+      voteId: r.voteId,
+      questionId: r.questionId,
+      optionId: r.answerOptionId,
+      acceptedAt: r.acceptedAt,
+    };
   }
 
   async getResults(questionId: string, signal?: AbortSignal): Promise<ResultsSnapshot> {
-    const r = await this.request<ApiResults>(`/api/questions/${encodeURIComponent(questionId)}/results`, undefined, signal);
+    const r = await this.request<ApiResults>(
+      `/api/questions/${encodeURIComponent(questionId)}/results`,
+      undefined,
+      signal,
+    );
     return {
       questionId: r.questionId,
       totalVotes: r.totalResponses,
-      results: r.results.map((x) => ({ optionId: x.answerOptionId, count: x.voteCount, percent: x.percentage })),
+      results: r.results.map((x) => ({
+        optionId: x.answerOptionId,
+        count: x.voteCount,
+        percent: x.percentage,
+      })),
       generatedAt: r.generatedAt,
     };
   }
@@ -139,7 +200,9 @@ export class HttpVotingService implements VotingService {
     let stopped = false;
     const tick = () => {
       if (stopped || document.visibilityState === "hidden") return;
-      this.getResults(questionId).then((s) => !stopped && onSnapshot(s)).catch(() => {});
+      this.getResults(questionId)
+        .then((s) => !stopped && onSnapshot(s))
+        .catch(() => {});
     };
     const t = setInterval(tick, POLL_INTERVAL_MS);
     return () => {

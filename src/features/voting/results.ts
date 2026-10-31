@@ -10,7 +10,10 @@ export function computeResults(counts: { optionId: string; count: number }[]): {
 } {
   const totalVotes = counts.reduce((s, c) => s + Math.max(0, c.count), 0);
   if (totalVotes === 0) {
-    return { totalVotes, results: counts.map((c) => ({ optionId: c.optionId, count: 0, percent: 0 })) };
+    return {
+      totalVotes,
+      results: counts.map((c) => ({ optionId: c.optionId, count: 0, percent: 0 })),
+    };
   }
   const raw = counts.map((c) => {
     const exact = (Math.max(0, c.count) / totalVotes) * 100;

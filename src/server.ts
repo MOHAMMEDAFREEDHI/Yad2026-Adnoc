@@ -3,6 +3,8 @@ import "./lib/error-capture";
 import { consumeLastCapturedError } from "./lib/error-capture";
 import { renderErrorPage } from "./lib/error-page";
 
+import { getOrCreateVisitor, parseVisitorCookie } from "./server/visitor";
+
 type ServerEntry = {
   fetch: (request: Request, env: unknown, ctx: unknown) => Promise<Response> | Response;
 };
@@ -44,12 +46,53 @@ function isH3SwallowedErrorBody(body: string): boolean {
   }
 }
 
+function attachVisitorCookie(request: Request, response: Response): Response {
+  try {
+    const pathname = new URL(request.url).pathname;
+    // Skip static assets (scripts, images, styles, fonts)
+    if (
+      pathname.startsWith("/assets/") ||
+      pathname.startsWith("/@") ||
+      pathname.endsWith(".ico") ||
+      pathname.endsWith(".png") ||
+      pathname.endsWith(".jpg") ||
+      pathname.endsWith(".svg") ||
+      pathname.endsWith(".css") ||
+      pathname.endsWith(".js")
+    ) {
+      return response;
+    }
+
+    if (parseVisitorCookie(request)) {
+      return response;
+    }
+    const existingSetCookie = response.headers.get("set-cookie");
+    if (existingSetCookie && existingSetCookie.includes("adnoc_vid=")) {
+      return response;
+    }
+
+    const { cookieToSet } = getOrCreateVisitor(request);
+    if (!cookieToSet) return response;
+
+    const headers = new Headers(response.headers);
+    headers.append("Set-Cookie", cookieToSet);
+    return new Response(response.body, {
+      status: response.status,
+      statusText: response.statusText,
+      headers,
+    });
+  } catch {
+    return response;
+  }
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
-      return await normalizeCatastrophicSsrResponse(response);
+      const normalized = await normalizeCatastrophicSsrResponse(response);
+      return attachVisitorCookie(request, normalized);
     } catch (error) {
       console.error(error);
       return new Response(renderErrorPage(), {

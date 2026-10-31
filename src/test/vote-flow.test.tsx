@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { FingerprintAppProvider } from "@/components/FingerprintAppProvider";
 import { MOCK_QUESTION, MockVotingService } from "@/features/voting/mock-service";
 import { _setVotingServiceForTests } from "@/features/voting/service";
 import { VoteError } from "@/features/voting/types";
@@ -8,6 +9,12 @@ import { VoteError } from "@/features/voting/types";
 import { Route } from "@/routes/vote";
 
 const VotePage = Route.options.component as () => React.ReactElement;
+const renderVotePage = () =>
+  render(
+    <FingerprintAppProvider>
+      <VotePage />
+    </FingerprintAppProvider>,
+  );
 
 describe("/vote mobile flow (MockVotingService)", () => {
   beforeEach(() => {
@@ -21,7 +28,7 @@ describe("/vote mobile flow (MockVotingService)", () => {
   });
 
   it("welcome → six options → single select → proceed → thank-you → back home → repeat vote (unrestricted policy)", async () => {
-    render(<VotePage />);
+    renderVotePage();
     fireEvent.click(screen.getByText("Let's find out"));
 
     const radios = await screen.findAllByRole("radio");
@@ -53,7 +60,12 @@ describe("/vote mobile flow (MockVotingService)", () => {
   });
 
   it("shows Submitting… loading state and prevents rapid double-clicks from submitting twice", async () => {
-    let resolveVote!: (v: { voteId: string; questionId: string; optionId: string; acceptedAt: string }) => void;
+    let resolveVote!: (v: {
+      voteId: string;
+      questionId: string;
+      optionId: string;
+      acceptedAt: string;
+    }) => void;
     const spy = vi.spyOn(MockVotingService.prototype, "submitVote").mockImplementation(
       () =>
         new Promise((resolve) => {
@@ -61,7 +73,7 @@ describe("/vote mobile flow (MockVotingService)", () => {
         }),
     );
 
-    render(<VotePage />);
+    renderVotePage();
     fireEvent.click(screen.getByText("Let's find out"));
     const radios = await screen.findAllByRole("radio");
     fireEvent.click(radios[1]!);
@@ -90,8 +102,10 @@ describe("/vote mobile flow (MockVotingService)", () => {
   });
 
   it("a failed submission keeps the selection, shows an error and a retry reuses the same idempotency key", async () => {
-    const spy = vi.spyOn(MockVotingService.prototype, "submitVote").mockRejectedValueOnce(new VoteError("NETWORK"));
-    render(<VotePage />);
+    const spy = vi
+      .spyOn(MockVotingService.prototype, "submitVote")
+      .mockRejectedValueOnce(new VoteError("NETWORK"));
+    renderVotePage();
     fireEvent.click(screen.getByText("Let's find out"));
     const radios = await screen.findAllByRole("radio");
     fireEvent.click(radios[4]!);
@@ -109,7 +123,7 @@ describe("/vote mobile flow (MockVotingService)", () => {
   });
 
   it("back from the choices returns to welcome; page refresh starts cleanly at welcome with persisted results", async () => {
-    const { unmount } = render(<VotePage />);
+    const { unmount } = renderVotePage();
     fireEvent.click(screen.getByText("Let's find out"));
     await screen.findAllByRole("radio");
     fireEvent.click(screen.getByLabelText("Back"));
@@ -117,7 +131,7 @@ describe("/vote mobile flow (MockVotingService)", () => {
 
     // Simulate browser refresh
     unmount();
-    render(<VotePage />);
+    renderVotePage();
     expect(screen.getByText("Let's find out")).toBeTruthy();
   });
 
@@ -127,7 +141,7 @@ describe("/vote mobile flow (MockVotingService)", () => {
     const spy = vi.spyOn(mock, "getActiveQuestion").mockResolvedValue(MOCK_QUESTION);
     _setVotingServiceForTests(mock);
 
-    render(<VotePage />);
+    renderVotePage();
     await act(async () => {
       await Promise.resolve();
     });
@@ -154,13 +168,15 @@ describe("/vote mobile flow (MockVotingService)", () => {
       .mockResolvedValue(MOCK_QUESTION);
     _setVotingServiceForTests(mock);
 
-    render(<VotePage />);
+    renderVotePage();
     await act(async () => {
       await Promise.resolve();
     });
 
     fireEvent.click(screen.getByText("Let's find out"));
-    expect(screen.getByRole("alert").textContent).toContain("Voting isn't open right now. Please try again shortly.");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "Voting isn't open right now. Please try again shortly.",
+    );
     expect(spy).toHaveBeenCalledTimes(1);
 
     // Advance 5s (first backoff interval) -> automatically recovers and renders 6 options without clicking Try again
@@ -182,10 +198,12 @@ describe("/vote mobile flow (MockVotingService)", () => {
   it("Scenario 3: when event remains draft, retries only on bounded backoff schedule (5s, 10s, 20s, 30s cap)", async () => {
     vi.useFakeTimers();
     const mock = new MockVotingService();
-    const spy = vi.spyOn(mock, "getActiveQuestion").mockRejectedValue(new VoteError("QUESTION_UNAVAILABLE"));
+    const spy = vi
+      .spyOn(mock, "getActiveQuestion")
+      .mockRejectedValue(new VoteError("QUESTION_UNAVAILABLE"));
     _setVotingServiceForTests(mock);
 
-    render(<VotePage />);
+    renderVotePage();
     await act(async () => {
       await Promise.resolve();
     });
@@ -239,13 +257,15 @@ describe("/vote mobile flow (MockVotingService)", () => {
       .mockResolvedValue(MOCK_QUESTION);
     _setVotingServiceForTests(mock);
 
-    render(<VotePage />);
+    renderVotePage();
     await act(async () => {
       await Promise.resolve();
     });
 
     fireEvent.click(screen.getByText("Let's find out"));
-    expect(screen.getByRole("alert").textContent).toContain("No connection. Check your internet and try again.");
+    expect(screen.getByRole("alert").textContent).toContain(
+      "No connection. Check your internet and try again.",
+    );
 
     // Reconnect event triggers immediate check
     await act(async () => {

@@ -1,4 +1,12 @@
-import { Briefcase, Building2, Cpu, Factory, HardHat, Lightbulb, type LucideIcon } from "lucide-react";
+import {
+  Briefcase,
+  Building2,
+  Cpu,
+  Factory,
+  HardHat,
+  Lightbulb,
+  type LucideIcon,
+} from "lucide-react";
 
 import type { OptionKey } from "./types";
 

@@ -4,7 +4,10 @@ import { loadConfig } from "./config";
 
 /** Minimal DB surface the repository needs; lets tests inject a fake. */
 export interface Db {
-  query<T extends QueryResultRow = QueryResultRow>(sql: string, params?: unknown[]): Promise<{ rows: T[] }>;
+  query<T extends QueryResultRow = QueryResultRow>(
+    sql: string,
+    params?: unknown[],
+  ): Promise<{ rows: T[] }>;
   transaction<T>(fn: (tx: Pick<Db, "query">) => Promise<T>): Promise<T>;
 }
 

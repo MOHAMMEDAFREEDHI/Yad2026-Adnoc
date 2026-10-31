@@ -144,7 +144,9 @@ export function ProgressRow({
 }) {
   const p = percent ?? 0;
   return (
-    <div className={`flex items-center ${scaled ? "gap-[calc(9.55*var(--k))]" : "gap-[9.55px]"} ${className}`}>
+    <div
+      className={`flex items-center ${scaled ? "gap-[calc(9.55*var(--k))]" : "gap-[9.55px]"} ${className}`}
+    >
       <div className="progress-track flex-1" role="presentation">
         <div className="progress-fill" style={{ width: `${p}%` }} />
       </div>
@@ -184,7 +186,12 @@ export function OptionCard({
       onClick={onSelect}
       className="option-card option-card-fit"
     >
-      <Icon size={20.81} strokeWidth={1.5} aria-hidden className="flex-none !size-[calc(20.81*var(--k))]" />
+      <Icon
+        size={20.81}
+        strokeWidth={1.5}
+        aria-hidden
+        className="flex-none !size-[calc(20.81*var(--k))]"
+      />
       <span className="mt-[calc(8.6*var(--k))] font-brand text-[calc(13.13*var(--k))] font-bold leading-[calc(15*var(--k))]">
         {option.label}
       </span>
@@ -196,7 +203,13 @@ export function OptionCard({
   );
 }
 
-export function SelectedSummary({ option, percent }: { option: AnswerOption; percent: number | null }) {
+export function SelectedSummary({
+  option,
+  percent,
+}: {
+  option: AnswerOption;
+  percent: number | null;
+}) {
   const Icon = OPTION_VISUALS[option.key].icon;
   return (
     <div className="option-card !min-h-0 !px-[17px] !pt-[18px] !pb-[16px] mx-[13px] font-summary">
@@ -204,7 +217,9 @@ export function SelectedSummary({ option, percent }: { option: AnswerOption; per
         <Icon size={22} strokeWidth={1.5} className="mt-[10px] flex-none" aria-hidden />
         <div className="flex-1">
           <div className="text-[15px] font-bold leading-[22px]">{option.label}</div>
-          <div className="text-[11.5px] leading-[17px] text-[#CFE0FF] mt-[2px]">{option.description}</div>
+          <div className="text-[11.5px] leading-[17px] text-[#CFE0FF] mt-[2px]">
+            {option.description}
+          </div>
         </div>
         <div className="flex items-center gap-[8px] mt-[6px]">
           <span className="grid place-items-center size-[14px] rounded-full bg-white/25 text-white">

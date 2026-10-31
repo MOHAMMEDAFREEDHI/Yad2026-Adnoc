@@ -7,7 +7,11 @@ import pg from "pg";
 
 const TEST_SLUG = "adipec-2026-http-test";
 const content = JSON.parse(fs.readFileSync("db/seed/voting-content.json", "utf8"));
-const mode = process.argv.includes("--setup") ? "setup" : process.argv.includes("--cleanup") ? "cleanup" : null;
+const mode = process.argv.includes("--setup")
+  ? "setup"
+  : process.argv.includes("--cleanup")
+    ? "cleanup"
+    : null;
 if (!mode) {
   console.error("Usage: node --env-file=.env scripts/http-test-event.mjs [--setup | --cleanup]");
   process.exit(1);
@@ -18,7 +22,9 @@ const ssl =
     ? false
     : {
         rejectUnauthorized: (process.env.DB_SSL_REJECT_UNAUTHORIZED ?? "true") !== "false",
-        ...(process.env.DB_SSL_CA_PATH ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH, "utf8") } : {}),
+        ...(process.env.DB_SSL_CA_PATH
+          ? { ca: fs.readFileSync(process.env.DB_SSL_CA_PATH, "utf8") }
+          : {}),
       };
 const client = new pg.Client({
   ...(process.env.DATABASE_URL ? { connectionString: process.env.DATABASE_URL } : {}),
@@ -111,4 +117,3 @@ try {
 } finally {
   await client.end();
 }
-

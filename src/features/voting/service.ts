@@ -34,6 +34,8 @@ export const VOTE_ERROR_MESSAGES = {
   POLL_CLOSED: "Voting has closed for this question.",
   INVALID_OPTION: "That choice isn't available. Please pick another.",
   DUPLICATE_VOTE: "Your choice has already been recorded.",
+  ALREADY_VOTED:
+    "You've already voted! Your response has been successfully recorded. Thank you for participating.",
   NETWORK: "No connection. Check your internet and try again.",
   TIMEOUT: "This is taking too long. Please try again.",
   SERVER: "Something went wrong. Please try again.",

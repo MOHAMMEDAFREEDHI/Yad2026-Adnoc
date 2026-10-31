@@ -24,6 +24,7 @@ export interface Question {
   prompt: string;
   status: "active" | "closed" | "draft";
   options: AnswerOption[];
+  hasVoted?: boolean;
 }
 
 export interface VoteSubmission {
@@ -31,6 +32,8 @@ export interface VoteSubmission {
   optionId: string;
   /** Client-generated key so a retried request cannot create a second vote. */
   idempotencyKey: string;
+  /** Fingerprint Pro identification event ID for server-side verification. */
+  fingerprintEventId?: string | undefined;
 }
 
 export interface VoteAccepted {
@@ -58,21 +61,33 @@ export type VoteErrorCode =
   | "POLL_CLOSED"
   | "INVALID_OPTION"
   | "DUPLICATE_VOTE"
+  | "ALREADY_VOTED"
   | "NETWORK"
   | "TIMEOUT"
   | "SERVER";
 
 export class VoteError extends Error {
-  constructor(public code: VoteErrorCode, message?: string) {
+  constructor(
+    public code: VoteErrorCode,
+    message?: string,
+  ) {
     super(message ?? code);
     this.name = "VoteError";
   }
 }
 
+export interface ActiveQuestionOptions {
+  signal?: AbortSignal | undefined;
+  eventId?: string | undefined;
+}
+
 export interface VotingService {
   /** True when the implementation is local/simulated and not persisted to the real database. */
   readonly isSimulated: boolean;
-  getActiveQuestion(signal?: AbortSignal): Promise<Question>;
+  getActiveQuestion(
+    opts?: AbortSignal | ActiveQuestionOptions,
+    eventId?: string,
+  ): Promise<Question>;
   submitVote(input: VoteSubmission, signal?: AbortSignal): Promise<VoteAccepted>;
   getResults(questionId: string, signal?: AbortSignal): Promise<ResultsSnapshot>;
   /** Pushes a fresh authoritative snapshot whenever results change. Returns unsubscribe. */

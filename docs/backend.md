@@ -38,6 +38,7 @@ The backend is integrated directly into the TanStack Start application and never
 
 All responses include `Content-Type: application/json` and `Cache-Control: no-store`.
 All error responses follow the envelope:
+
 ```json
 {
   "error": {
@@ -103,7 +104,7 @@ Validates and persists a vote inside a PostgreSQL transaction (`BEGIN ... COMMIT
     "idempotencyKey": "10000000-0000-4000-8000-000000000001"
   }
   ```
-  *(Note: `HttpVotingService.submitVote` maps frontend `input.optionId` to `answerOptionId` in the POST body, and maps `answerOptionId` back to `VoteAccepted.optionId`.)*
+  _(Note: `HttpVotingService.submitVote` maps frontend `input.optionId` to `answerOptionId` in the POST body, and maps `answerOptionId` back to `VoteAccepted.optionId`.)_
 - **Success — First Submission (`201 Created`)**:
   ```json
   {
@@ -189,12 +190,35 @@ Executes a read-only database check (`current_database()` and `pg_stat_ssl`).
 - **Request Idempotency (Implemented & Enforced)**:
   - Before submitting a vote, the frontend generates a v4 UUID (`idempotencyKey`) and keeps that same key in memory (`keyRef`) if the user retries a failed submission for the same option.
   - PostgreSQL enforces `UNIQUE (idempotency_key)` on `votes`. Network retries or duplicate packet delivery can never create a second vote row.
-- **Anonymous QR-Code Repeat-Voting Policy (`VOTE_POLICY=unrestricted`)**:
-  - Request idempotency protects against **retrying the same submission**; it does **not** prevent a visitor from tapping *"Back to home"* (or refreshing/re-scanning the event QR code) and submitting a new independent vote with a freshly generated `idempotencyKey`.
-  - During development and pending project-owner decision, `VOTE_POLICY=unrestricted` is the configured default. Setting `VOTE_POLICY` to any unimplemented value causes `loadConfig()` to fail fast rather than silently ignoring the setting.
-  - **Requirements if a stricter policy is approved**:
-    - *One-vote-per-browser/device*: Store a completed flag or token in `localStorage`/cookie + pass a hashed client token to the backend, backed by a new nullable column and unique index `UNIQUE (question_id, voter_token_hash)` on `votes` (still bypassed by private browsing).
-    - *One-vote-per-person*: Requires an authenticated attendee identifier (e.g., signed badge QR code or OTP) verified server-side and stored in a unique column on `votes`.
+  - Same `idempotencyKey` + same option returns HTTP `200` with `"replayed": true`.
+  - Same `idempotencyKey` + different option returns HTTP `409` with code `"IDEMPOTENCY_CONFLICT"`.
+
+- **Anonymous One-Time Voting Policy (`VOTE_POLICY=one_vote_per_browser`)**:
+  - **Visitor ID Generation**: On first visit, the backend generates a cryptographically secure random visitor ID (`crypto.randomUUID()`) and sets a persistent cookie:
+    - Cookie Name: `adnoc_vid`
+    - Attributes: `HttpOnly`, `SameSite=Lax`, `Path=/`, `Max-Age=34560000` (400 days), and `Secure` in production environments.
+    - Security note: `localStorage` is explicitly not used as the security mechanism.
+  - **Server-Side HMAC-SHA256**: On vote submission and question fetch, the backend computes a server-side HMAC-SHA256 hash using `VISITOR_HMAC_SECRET`. The raw visitor ID is never stored in AWS RDS, guaranteeing attendee privacy.
+  - **Event Participation Storage (`event_participations`)**:
+    - Stores `(id, event_id, visitor_id_hash, created_at)`.
+    - Enforces database constraint `CONSTRAINT event_participations_event_visitor_unique UNIQUE (event_id, visitor_id_hash)`.
+  - **Atomic Transaction**: The event participation record and vote record are saved atomically inside a single PostgreSQL transaction (`BEGIN ... COMMIT`). If either write fails, the entire transaction rolls back.
+  - **Subsequent Visit & Repeat Voting Rejection**:
+    - Subsequent visits to `/api/questions/active` from the same browser profile check `event_participations` and return `"hasVoted": true`.
+    - Duplicate vote submissions with a new idempotency key from the same browser profile are rejected with HTTP `409` and error code `"ALREADY_VOTED"`:
+      ```json
+      {
+        "error": {
+          "code": "ALREADY_VOTED",
+          "message": "You've already voted! Your response has been successfully recorded. Thank you for participating."
+        }
+      }
+      ```
+    - The voting UI displays: _"You've already voted! Your response has been successfully recorded. Thank you for participating."_ and disables the Proceed button.
+  - **Important Limitations**:
+    - This is one vote per browser profile, not guaranteed one vote per physical phone (separate browsers or Incognito sessions create distinct profiles).
+    - Existing votes submitted before this implementation have no visitor identifier; they are preserved and never associated or deleted.
+    - Setting `VOTE_POLICY=unrestricted` disables the one-vote-per-browser restriction while preserving request idempotency.
 
 ---
 
