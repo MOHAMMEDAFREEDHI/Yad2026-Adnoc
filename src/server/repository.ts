@@ -17,6 +17,14 @@ export interface ActiveQuestionPayload {
   event: { id: string; name: string; slug: string };
   question: { id: string; prompt: string; subtitle: string | null; status: string };
   hasVoted?: boolean;
+  votedOption?: {
+    id: string;
+    label: string;
+    description: string | null;
+    imageUrl: string | null;
+    iconKey: string | null;
+    displayOrder: number;
+  } | null;
   options: {
     id: string;
     label: string;
@@ -69,12 +77,46 @@ export async function getActiveQuestion(
     throw new ApiError(404, "QUESTION_UNAVAILABLE", "No active question is open for voting.");
 
   let hasVoted = false;
+  let votedOption: ActiveQuestionPayload["votedOption"] = null;
   if (visitorIdHash) {
-    const v = await db.query(
-      "SELECT 1 FROM event_participations WHERE event_id = $1 AND visitor_id_hash = $2",
+    const v = await db.query<{
+      answer_option_id: string | null;
+      label: string | null;
+      description: string | null;
+      image_url: string | null;
+      icon_key: string | null;
+      display_order: number | null;
+    }>(
+      `SELECT COALESCE(ep.answer_option_id, (
+                SELECT v.answer_option_id FROM votes v
+                 WHERE v.submitted_at = ep.created_at
+                 LIMIT 1
+              )) AS answer_option_id,
+              ao.label, ao.description, ao.image_url, ao.icon_key, ao.display_order
+         FROM event_participations ep
+         LEFT JOIN answer_options ao ON ao.id = COALESCE(ep.answer_option_id, (
+                SELECT v.answer_option_id FROM votes v
+                 WHERE v.submitted_at = ep.created_at
+                 LIMIT 1
+              ))
+        WHERE ep.event_id = $1 AND ep.visitor_id_hash = $2
+        LIMIT 1`,
       [row.event_id, visitorIdHash],
     );
-    hasVoted = v.rows.length > 0;
+    if (v.rows.length > 0) {
+      hasVoted = true;
+      const r = v.rows[0];
+      if (r?.answer_option_id && r.label) {
+        votedOption = {
+          id: r.answer_option_id,
+          label: r.label,
+          description: r.description,
+          imageUrl: r.image_url,
+          iconKey: r.icon_key,
+          displayOrder: r.display_order ?? 1,
+        };
+      }
+    }
   }
 
   const o = await db.query<{
@@ -100,6 +142,7 @@ export async function getActiveQuestion(
     event: { id: row.event_id, name: row.event_name, slug: row.event_slug },
     question: { id: row.id, prompt: row.prompt, subtitle: row.subtitle, status: row.status },
     hasVoted,
+    votedOption,
     options: o.rows.map((r) => ({
       id: r.id,
       label: r.label,
@@ -194,11 +237,11 @@ export async function submitVote(db: Db, input: SubmitVoteInput): Promise<Accept
 
       // Record event participation; unique constraint enforces one vote per event & visitor
       const part = await tx.query(
-        `INSERT INTO event_participations (event_id, visitor_id_hash)
-         VALUES ($1, $2)
+        `INSERT INTO event_participations (event_id, visitor_id_hash, answer_option_id)
+         VALUES ($1, $2, $3)
          ON CONFLICT (event_id, visitor_id_hash) DO NOTHING
          RETURNING id`,
-        [eventId, input.visitorIdHash],
+        [eventId, input.visitorIdHash, input.answerOptionId],
       );
       if (part.rows.length === 0) {
         // Lost race on event participation with another concurrent request

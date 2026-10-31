@@ -20,7 +20,7 @@ interface State {
   eStatus: string;
   qStatus: string;
   votes: { id: string; q: string; o: string; k: string; at: Date }[];
-  participations: { id: string; eventId: string; visitorIdHash: string }[];
+  participations: { id: string; eventId: string; visitorIdHash: string; answerOptionId?: string }[];
   fail?: boolean;
 }
 function fakeDb(s: State): Db {
@@ -40,9 +40,21 @@ function fakeDb(s: State): Db {
     if (sql.includes("FROM answer_options WHERE id = $1")) {
       return { rows: p[1] === ID.q && ID.o.includes(p[0] as string) ? [{ "?column?": 1 }] : [] };
     }
-    if (sql.includes("FROM event_participations WHERE event_id = $1 AND visitor_id_hash = $2")) {
+    if (sql.includes("FROM event_participations")) {
       const part = s.participations.find((x) => x.eventId === p[0] && x.visitorIdHash === p[1]);
-      return { rows: part ? [{ "?column?": 1 }] : [] };
+      if (!part) return { rows: [] };
+      return {
+        rows: [
+          {
+            answer_option_id: part.answerOptionId ?? ID.o[0],
+            label: "Option 1",
+            description: "Desc",
+            image_url: null,
+            icon_key: "business-owner",
+            display_order: 1,
+          },
+        ],
+      };
     }
     if (sql.startsWith("INSERT INTO event_participations")) {
       if (s.participations.some((x) => x.eventId === p[0] && x.visitorIdHash === p[1])) {
@@ -52,6 +64,7 @@ function fakeDb(s: State): Db {
         id: `ep-${s.participations.length + 1}`,
         eventId: p[0] as string,
         visitorIdHash: p[1] as string,
+        answerOptionId: p[2] as string | undefined,
       };
       s.participations.push(ep);
       return { rows: [{ id: ep.id }] };

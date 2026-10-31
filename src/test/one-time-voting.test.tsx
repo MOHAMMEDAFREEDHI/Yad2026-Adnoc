@@ -68,6 +68,7 @@ describe("Anonymous One-Time Voting Flow (/vote)", () => {
             JSON.stringify({
               ...ACTIVE_QUESTION_PAYLOAD,
               hasVoted: visitorHasVoted,
+              votedOption: visitorHasVoted ? ACTIVE_QUESTION_PAYLOAD.options[0] : null,
             }),
             { status: 200, headers: { "Content-Type": "application/json" } },
           ),
@@ -149,32 +150,27 @@ describe("Anonymous One-Time Voting Flow (/vote)", () => {
     fireEvent.click(screen.getByText("Back to home"));
     await screen.findByText("Let's find out");
 
-    // Click "Let's find out" again in the same browser session
+    // Click "Let's find out" again in the same browser session -> navigates directly to Thank You page
     fireEvent.click(screen.getByText("Let's find out"));
-    await screen.findAllByRole("radio");
+    await screen.findByText(/for taking part/i);
 
-    // Verify already-voted message is displayed and Proceed is disabled
-    expect(
-      screen.getByText(
-        "You've already voted! Your response has been successfully recorded. Thank you for participating.",
-      ),
-    ).toBeTruthy();
-    const blockedProceed = screen.getByText("Proceed").closest("button")!;
-    expect(blockedProceed.disabled).toBe(true);
+    // Verify returning visitor sees Thank You page with their previous answer, not the selection grid
+    expect(screen.getByText("Your choice has been submitted.")).toBeTruthy();
+    expect(screen.getByText("Business owner")).toBeTruthy();
+    expect(screen.queryByRole("radio")).toBeNull();
+    expect(screen.queryByText("Proceed")).toBeNull();
 
     // 3. Repeat Visit / Page Refresh: Unmount and remount fresh VotePage
     unmount();
     renderVotePage();
 
-    // Click "Let's find out" on fresh mount
+    // Click "Let's find out" on fresh mount -> navigates directly to Thank You page
     fireEvent.click(screen.getByText("Let's find out"));
-    await screen.findAllByRole("radio");
+    await screen.findByText(/for taking part/i);
 
-    // Message is displayed from subsequent visit check (hasVoted: true)
-    await screen.findByText(
-      "You've already voted! Your response has been successfully recorded. Thank you for participating.",
-    );
-    expect(screen.getByText("Proceed").closest("button")!.disabled).toBe(true);
+    expect(screen.getByText("Your choice has been submitted.")).toBeTruthy();
+    expect(screen.getByText("Business owner")).toBeTruthy();
+    expect(screen.queryByRole("radio")).toBeNull();
   });
 
   it("server 409 ALREADY_VOTED error displays exact rejection message", async () => {

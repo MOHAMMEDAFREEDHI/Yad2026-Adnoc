@@ -126,7 +126,12 @@ function VotePage() {
           questionRef.current = q;
           setQuestion(q);
           if (q.hasVoted) {
+            const opt = q.votedOption ?? q.options.find((o) => o.id === q.votedOption?.id) ?? null;
+            if (opt) {
+              setAccepted(opt);
+            }
             setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+            setStep((current) => (current === "choose" ? "thanks" : current));
           }
           setLoadError(null);
           setLoadingQuestion(false);
@@ -166,7 +171,8 @@ function VotePage() {
   // Background check: when Fingerprint identification completes, detect if visitor has already voted
   useEffect(() => {
     const eventId = visitorData?.event_id;
-    if (!eventId || !question || question.hasVoted || service.isSimulated) return;
+    if (!eventId || service.isSimulated) return;
+    if (questionRef.current?.hasVoted && (questionRef.current.votedOption || accepted)) return;
 
     service
       .getActiveQuestion({ eventId })
@@ -175,11 +181,21 @@ function VotePage() {
           const updated = { ...q, hasVoted: true };
           questionRef.current = updated;
           setQuestion(updated);
+          const opt = q.votedOption ?? q.options.find((o) => o.id === q.votedOption?.id) ?? null;
+          if (opt) {
+            setAccepted(opt);
+          }
           setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+          setStep((currentStep) => {
+            if (currentStep === "choose") {
+              return "thanks";
+            }
+            return currentStep;
+          });
         }
       })
       .catch(() => {});
-  }, [visitorData?.event_id, question, service]);
+  }, [visitorData?.event_id, accepted, service]);
 
   useEffect(() => {
     mountedRef.current = true;
@@ -275,7 +291,7 @@ function VotePage() {
       const opt = question.options.find((o) => o.id === res.optionId) ?? null;
       setAccepted(opt);
       if (!service.isSimulated) {
-        const updatedQuestion = { ...question, hasVoted: true };
+        const updatedQuestion: Question = { ...question, hasVoted: true, votedOption: opt };
         questionRef.current = updatedQuestion;
         setQuestion(updatedQuestion);
         setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
@@ -291,6 +307,18 @@ function VotePage() {
         const updatedQuestion = { ...question, hasVoted: true };
         questionRef.current = updatedQuestion;
         setQuestion(updatedQuestion);
+        const activeEventId = visitorDataRef.current?.event_id;
+        service
+          .getActiveQuestion({ eventId: activeEventId })
+          .then((q) => {
+            const prevOpt =
+              q.votedOption ?? q.options.find((o) => o.id === q.votedOption?.id) ?? null;
+            if (prevOpt) {
+              setAccepted(prevOpt);
+              setStep("thanks");
+            }
+          })
+          .catch(() => {});
       }
       const code =
         e instanceof VoteError
@@ -308,8 +336,8 @@ function VotePage() {
 
   function goHome() {
     setSelectedId(null);
-    setAccepted(null);
-    if (!question?.hasVoted) {
+    if (!questionRef.current?.hasVoted) {
+      setAccepted(null);
       setSubmitError(null);
     }
     setStep("welcome");
@@ -349,10 +377,24 @@ function VotePage() {
         {step === "welcome" && (
           <Welcome
             onStart={() => {
-              setStep("choose");
-              if (questionRef.current?.hasVoted) {
-                setSubmitError(VOTE_ERROR_MESSAGES.ALREADY_VOTED);
+              const q = questionRef.current;
+              if (q?.hasVoted) {
+                const opt =
+                  q.votedOption ?? accepted ?? q.options.find((o) => o.id === q.votedOption?.id);
+                if (opt) {
+                  setAccepted(opt);
+                }
+                if (q.id) {
+                  service
+                    .getResults(q.id)
+                    .then(setResults)
+                    .catch(() => {});
+                }
+                setStep("thanks");
+                return;
               }
+
+              setStep("choose");
               if (
                 !questionRef.current &&
                 !questionInFlightRef.current &&

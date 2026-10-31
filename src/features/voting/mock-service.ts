@@ -84,6 +84,7 @@ const CHANNEL = "adipec-vote-mock";
 interface Store {
   counts: Record<string, number>;
   keys: Record<string, VoteAccepted>;
+  lastVotedOptionId?: string;
 }
 
 function delay(ms: number, signal?: AbortSignal) {
@@ -132,9 +133,16 @@ export class MockVotingService implements VotingService {
   async getActiveQuestion(
     _opts?: AbortSignal | { signal?: AbortSignal; eventId?: string },
     _maybeEventId?: string,
-  ) {
-    // Immediate return of the active mock question to avoid timing/abort race conditions.
-    return Promise.resolve(MOCK_QUESTION);
+  ): Promise<Question> {
+    const s = this.read();
+    const votedOption = s.lastVotedOptionId
+      ? (MOCK_QUESTION.options.find((o) => o.id === s.lastVotedOptionId) ?? null)
+      : null;
+    return Promise.resolve({
+      ...MOCK_QUESTION,
+      hasVoted: Boolean(votedOption),
+      votedOption,
+    });
   }
 
   async submitVote(input: VoteSubmission, signal?: AbortSignal): Promise<VoteAccepted> {
@@ -156,6 +164,7 @@ export class MockVotingService implements VotingService {
     };
     s.counts[input.optionId] = (s.counts[input.optionId] ?? 0) + 1;
     s.keys[input.idempotencyKey] = accepted;
+    s.lastVotedOptionId = input.optionId;
     this.write(s);
     if (typeof BroadcastChannel !== "undefined") {
       const bc = new BroadcastChannel(CHANNEL);

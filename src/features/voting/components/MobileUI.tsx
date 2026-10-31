@@ -210,7 +210,7 @@ export function SelectedSummary({
   option: AnswerOption;
   percent: number | null;
 }) {
-  const Icon = OPTION_VISUALS[option.key].icon;
+  const Icon = OPTION_VISUALS[option.key]?.icon ?? OPTION_VISUALS["business-owner"].icon;
   return (
     <div className="option-card !min-h-0 !px-[17px] !pt-[18px] !pb-[16px] mx-[13px] font-summary">
       <div className="flex items-start gap-[18px]">

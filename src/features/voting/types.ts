@@ -25,6 +25,7 @@ export interface Question {
   status: "active" | "closed" | "draft";
   options: AnswerOption[];
   hasVoted?: boolean;
+  votedOption?: AnswerOption | null;
 }
 
 export interface VoteSubmission {

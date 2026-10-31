@@ -51,6 +51,13 @@ interface ApiActiveQuestion {
     displayOrder: number;
   }[];
   hasVoted?: boolean;
+  votedOption?: {
+    id: string;
+    label: string;
+    description: string | null;
+    iconKey: string | null;
+    displayOrder: number;
+  } | null;
 }
 interface ApiResults {
   questionId: string;
@@ -135,6 +142,15 @@ export class HttpVotingService implements VotingService {
       prompt: r.question.subtitle ?? "",
       status: "active", // the API only returns a question when it is open for voting
       hasVoted: Boolean(r.hasVoted),
+      votedOption: r.votedOption
+        ? {
+            id: r.votedOption.id,
+            key: (r.votedOption.iconKey ?? "") as OptionKey,
+            label: r.votedOption.label,
+            description: r.votedOption.description ?? "",
+            sortOrder: r.votedOption.displayOrder,
+          }
+        : null,
       options: r.options.map((o) => ({
         id: o.id,
         key: (o.iconKey ?? "") as OptionKey,
