@@ -26,13 +26,13 @@ export const OPTION_VISUALS: Record<
     icon: Briefcase,
     image: null,
     expectedAssetFile: "src/assets/business-owner.jpg",
-    ledLabel: ["Business owner"],
+    ledLabel: ["Entrepreneur"],
   },
   "industrial-investor": {
     icon: Factory,
     image: null,
     expectedAssetFile: "src/assets/industrial-investor.jpg",
-    ledLabel: ["Industrial", "investor"],
+    ledLabel: ["Technology", "innovator"],
   },
   "private-sector": {
     icon: Building2,

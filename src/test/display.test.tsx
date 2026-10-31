@@ -100,7 +100,7 @@ describe("/display portrait LED results screen", () => {
     expect(screen.getByText("20%")).toBeTruthy();
     expect(screen.getAllByText("10%")).toHaveLength(4);
 
-    const opt1Bar = screen.getByLabelText("Business owner vote share");
+    const opt1Bar = screen.getByLabelText("Entrepreneur vote share");
     expect(opt1Bar.getAttribute("aria-valuenow")).toBe("40");
   });
 

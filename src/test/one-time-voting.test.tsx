@@ -25,15 +25,15 @@ const ACTIVE_QUESTION_PAYLOAD = {
   options: [
     {
       id: "opt-1",
-      label: "Business owner",
+      label: "Entrepreneur",
       description: "Start your own factory or company",
       iconKey: "business-owner",
       displayOrder: 1,
     },
     {
       id: "opt-2",
-      label: "Industrial investor",
-      description: "Invest in new UAE factories",
+      label: "Technology innovator",
+      description: "Shape future and digital solutions",
       iconKey: "industrial-investor",
       displayOrder: 2,
     },
@@ -45,8 +45,8 @@ const RESULTS_PAYLOAD = {
   totalResponses: 1,
   generatedAt: new Date().toISOString(),
   results: [
-    { answerOptionId: "opt-1", label: "Business owner", voteCount: 1, percentage: 100 },
-    { answerOptionId: "opt-2", label: "Industrial investor", voteCount: 0, percentage: 0 },
+    { answerOptionId: "opt-1", label: "Entrepreneur", voteCount: 1, percentage: 100 },
+    { answerOptionId: "opt-2", label: "Technology innovator", voteCount: 0, percentage: 0 },
   ],
 };
 
@@ -156,7 +156,7 @@ describe("Anonymous One-Time Voting Flow (/vote)", () => {
 
     // Verify returning visitor sees Thank You page with their previous answer, not the selection grid
     expect(screen.getByText("Your choice has been submitted.")).toBeTruthy();
-    expect(screen.getByText("Business owner")).toBeTruthy();
+    expect(screen.getByText("Entrepreneur")).toBeTruthy();
     expect(screen.queryByRole("radio")).toBeNull();
     expect(screen.queryByText("Proceed")).toBeNull();
 
@@ -169,7 +169,7 @@ describe("Anonymous One-Time Voting Flow (/vote)", () => {
     await screen.findByText(/for taking part/i);
 
     expect(screen.getByText("Your choice has been submitted.")).toBeTruthy();
-    expect(screen.getByText("Business owner")).toBeTruthy();
+    expect(screen.getByText("Entrepreneur")).toBeTruthy();
     expect(screen.queryByRole("radio")).toBeNull();
   });
 

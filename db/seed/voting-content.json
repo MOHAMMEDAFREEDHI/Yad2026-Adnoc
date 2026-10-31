@@ -8,15 +8,15 @@
   "options": [
     {
       "displayOrder": 1,
-      "label": "Business owner",
+      "label": "Entrepreneur",
       "description": "Start your own factory or company",
       "iconKey": "business-owner",
       "imageUrl": null
     },
     {
       "displayOrder": 2,
-      "label": "Industrial investor",
-      "description": "Invest in new UAE factories",
+      "label": "Technology innovator",
+      "description": "Shape future and digital solutions",
       "iconKey": "industrial-investor",
       "imageUrl": null
     },

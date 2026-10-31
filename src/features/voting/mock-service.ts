@@ -26,15 +26,15 @@ export const MOCK_QUESTION: Question = {
     {
       id: "opt-1",
       key: "business-owner",
-      label: "Business owner",
+      label: "Entrepreneur",
       description: "Start your own factory or company",
       sortOrder: 1,
     },
     {
       id: "opt-2",
       key: "industrial-investor",
-      label: "Industrial investor",
-      description: "Invest in new UAE factories",
+      label: "Technology innovator",
+      description: "Shape future and digital solutions",
       sortOrder: 2,
     },
     {
